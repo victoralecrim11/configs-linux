@@ -477,5 +477,3 @@ else
   info "Docker Engine nao instalado; verifique Podman com: podman --version"
 fi
 info "Nenhuma reinicializacao sera executada automaticamente."
-
-[executed on device: kubuntu-vm (c04215db-43c3-4d78-b111-4bcf58f5f159)]
