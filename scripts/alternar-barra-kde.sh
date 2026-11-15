@@ -83,5 +83,3 @@ AJUDA
     exit 1
     ;;
 esac
-
-[executed on device: kubuntu-vm (c04215db-43c3-4d78-b111-4bcf58f5f159)]
