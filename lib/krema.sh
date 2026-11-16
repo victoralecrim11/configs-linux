@@ -32,7 +32,7 @@ install_krema() {
         { rm -rf -- "$tmpdir"; die "Chave do Krema invalida."; }
       sudo install -m 0644 "$tmpdir/krema.gpg" /usr/share/keyrings/krema-obs.gpg ||
         { rm -rf -- "$tmpdir"; die "Falha ao instalar chave do OBS Krema."; }
-      printf 'deb [signed-by=/usr/share/keyrings/krema-obs.gpg] %s /\\n' "$src_url" |
+      printf 'deb [signed-by=/usr/share/keyrings/krema-obs.gpg] %s /\n' "$src_url" |
         sudo tee /etc/apt/sources.list.d/krema-obs.list >/dev/null ||
         { rm -rf -- "$tmpdir"; die "Nao foi possivel configurar fonte Krema OBS."; }
       rm -rf -- "$tmpdir"
