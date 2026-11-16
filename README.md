@@ -14,11 +14,11 @@ Após instalar a distro e fazer o primeiro login no KDE Plasma, abra o Konsole:
 sudo apt update
 sudo apt install -y git
 cd "$HOME"
-git clone https://github.com/victoralecrim11/configs-linux-kubunutu.git
-cd configs-linux-kubunutu
+git clone https://github.com/victoralecrim11/configs-linux.git
+cd configs-linux
 ```
 
-Se você já clonou o projeto, **não clone novamente**: use `cd ~/configs-linux-kubunutu`.
+Se você já clonou o projeto, **não clone novamente**: use `cd ~/configs-linux`. Se seu clone antigo ainda está em `~/configs-linux-kubunutu`, pode continuar usando essa pasta; o nome local não precisa mudar.
 
 ### Diagnóstico, simulação e backup inicial
 
@@ -67,7 +67,7 @@ A alternância controla o painel e a dock Krema, mas **não desinstala ferrament
 ### Atualizar os scripts
 
 ```bash
-cd "$HOME/configs-linux-kubunutu"
+cd "$HOME/configs-linux"
 git pull --ff-only
 ```
 
