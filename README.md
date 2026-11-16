@@ -6,8 +6,9 @@ Scripts de personalização do **Kubuntu 26.04 LTS / KDE Plasma 6**, com visual 
 
 ```text
 scripts/
-├── kubuntu-hybrid-setup-v1.0.2.sh  # Personalização, pacotes dev e ajustes opcionais
-└── alternar-barra-kde.sh          # Backup e alternância do layout de painéis/widgets
+├── kubuntu-hybrid-setup-v1.0.2.sh  # Setup visual / ambiente dev
+├── perfil-barra-atual-kde.sh       # Instala/configura o painel + a dock Krema
+└── alternar-barra-kde.sh           # Alterna entre KDE original e personalizado
 ```
 
 ## Requisitos
@@ -37,24 +38,47 @@ bash scripts/kubuntu-hybrid-setup-v1.0.2.sh --restore "$HOME/kde-backup-hybrid-A
 
 Substitua o nome pelo diretório real de backup. Essa restauração não desinstala pacotes nem reverte todas as mudanças de sistema.
 
-## Voltar à barra padrão do KDE
+## Alternar perfis: KDE original ↔ personalizado
 
-**Faça backup da personalização antes de alternar:**
+Use **um único script** para alternar os dois perfis (painel + dock), sempre no Konsole, **sem sudo**.
+
+| Comando | Resultado |
+| --- | --- |
+| `bash scripts/alternar-barra-kde.sh status` | Exibe o perfil atual, a dock e os snapshots |
+| `bash scripts/alternar-barra-kde.sh salvar-original` | Salva o KDE original antes da primeira personalização |
+| `bash scripts/alternar-barra-kde.sh backup` | Salva seu visual personalizado atual |
+| `bash scripts/alternar-barra-kde.sh original` | Retorna ao KDE tradicional e desativa a Krema, inclusive no próximo login |
+| `bash scripts/alternar-barra-kde.sh personalizada` | Retorna ao painel superior com Krema e instala a dock caso necessário |
+
+### Primeira configuração em um Kubuntu recém-instalado
+
+Após iniciar o KDE Plasma pela primeira vez:
 
 ```bash
-bash scripts/alternar-barra-kde.sh backup
-bash scripts/alternar-barra-kde.sh original
-```
-
-Para voltar à barra personalizada salva:
-
-```bash
+bash scripts/alternar-barra-kde.sh salvar-original
 bash scripts/alternar-barra-kde.sh personalizada
 ```
 
-O script atua em `~/.config/plasma-org.kde.plasma.desktop-appletsrc`, que contém **painéis e widgets da área de trabalho**. Ao usar `original`, ele salva uma cópia com data, remove o arquivo de configuração dos painéis e reinicia `plasma-plasmashell.service` para solicitar a recriação do layout padrão. Dependendo do estado da sessão Plasma, pode ser necessário fazer logout/login. Ele **não desinstala** uma dock de terceiros; essa dock pode continuar sendo iniciada separadamente.
+Para alternar quantas vezes quiser:
 
-Os backups de alternância ficam em `~/.local/share/backup-barra-kde/`. Nunca publique arquivos pessoais de `~/.config`, tokens ou senhas neste repositório público.
+```bash
+bash scripts/alternar-barra-kde.sh original
+bash scripts/alternar-barra-kde.sh personalizada
+```
+
+O script guarda snapshots em `${XDG_DATA_HOME:-$HOME/.local/share}/kubuntu-hybrid/perfis-alternancia/`, fora do repositório. Ele **não publica configurações pessoais no GitHub**.
+
+### Se você já personalizou o KDE na VM
+
+Faça primeiro:
+
+```bash
+bash scripts/alternar-barra-kde.sh backup
+```
+
+Como não foi preservado um snapshot do KDE original **antes** da personalização da VM, a primeira execução de `original` precisará **recriar os painéis padrão**, o que redefine os widgets e a disposição do Plasma. O backup personalizado continua recuperável. Trocar de perfil pode exigir logout/login, e o pacote Krema permanece instalado ao usar `original`.
+
+O mecanismo também guarda backups de segurança a cada transição e desabilita a inicialização automática da Krema somente no perfil original, preservando a configuração de autostart existente do usuário, quando houver.
 
 ## Validação
 
@@ -82,7 +106,7 @@ bash scripts/perfil-barra-atual-kde.sh aplicar    # reaplica perfil visual
 bash scripts/perfil-barra-atual-kde.sh restaurar "$HOME/.local/share/kubuntu-hybrid/perfis-barra/NOME-DO-BACKUP"
 ```
 
-O comando `aplicar` mantém os widgets existentes, e não remove aplicativos ou docks. Para reproduzir o ambiente completo em outra máquina, instale o Krema e os elementos visuais necessários usando o instalador original; o script de perfil **não instala dependências nem recria integralmente todos os widgets e arquivos de ícones**.
+O comando `aplicar` preserva os widgets existentes e instala o Krema pelo PPA quando necessário no Kubuntu 26.04; ele não recria integralmente todos os arquivos de ícones e componentes visuais de terceiros.
 
 **Segurança:** backups reais da sessão permanecem no computador, fora do repositório público, pois podem conter preferências e identificadores locais. Faça logout/login após aplicar o perfil para garantir que painel e Krema releiam as opções.
 
