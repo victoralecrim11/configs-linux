@@ -128,6 +128,7 @@ confirm "Instalar o perfil $PROFILE no sistema $DISTRO_NAME?" ||
   die "Instalacao cancelada pelo usuario."
 sudo -v || die "Nao foi possivel obter permissao administrativa."
 
+umask 077
 prepare_state
 backup_kde
 if [[ "$PROFILE" == dev || "$PROFILE" == full ]]; then
