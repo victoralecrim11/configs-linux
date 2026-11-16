@@ -2,6 +2,84 @@
 
 Scripts de personalização do **Kubuntu 26.04 LTS / KDE Plasma 6**, com visual inspirado em Windows 11, Garuda e dock no estilo macOS. Desenvolvidos e testados inicialmente na VM `kubuntu-vm`.
 
+## Comece aqui: instalar, clonar e executar
+
+Após instalar o **Kubuntu 26.04 LTS**, entre na sessão KDE Plasma (Wayland) e abra o **Konsole**.
+
+### 1. Instale o Git
+
+```bash
+sudo apt update
+sudo apt install -y git
+```
+
+### 2. Clone o repositório
+
+```bash
+cd "$HOME"
+git clone https://github.com/victoralecrim11/configs-linux-kubunutu.git
+cd configs-linux-kubunutu
+```
+
+Se já clonou, basta executar `cd ~/configs-linux-kubunutu`. Não faça o clone novamente na mesma pasta.
+
+### 3. Confira os scripts (sem alterar o sistema)
+
+```bash
+ls scripts/
+for arquivo in scripts/*.sh; do bash -n "$arquivo" || exit 1; done
+bash scripts/kubuntu-hybrid-setup-v1.0.2.sh --dry-run
+```
+
+### 4. Salve o painel KDE original (antes de personalizar)
+
+```bash
+bash scripts/alternar-barra-kde.sh salvar-original
+```
+
+Execute após o primeiro login, quando o painel padrão do KDE já estiver carregado. Esta etapa permite restaurá-lo posteriormente.
+
+### 5. Aplique o perfil personalizado, com instalação da dock
+
+```bash
+bash scripts/alternar-barra-kde.sh personalizada
+bash scripts/alternar-barra-kde.sh status
+```
+
+Esse fluxo aplica o painel superior, instala o Krema caso não esteja presente (via PPA e APT) e configura a dock. Pode solicitar sua senha para instalar pacotes. Faça logout/login se alguma mudança não aparecer imediatamente.
+
+### 6. Opcional: personalize tema, ícones e wallpaper
+
+Para aplicar recursos visuais adicionais sem refazer o painel nem a dock:
+
+```bash
+bash scripts/kubuntu-hybrid-setup-v1.0.2.sh --profile visual --no-panel --no-dock
+```
+
+Para incluir ferramentas de desenvolvimento, veja `--profile dev` e `--profile full` no `--help` e revise os pacotes antes de executar.
+
+### Atualize o repositório depois
+
+```bash
+cd "$HOME/configs-linux-kubunutu"
+git pull --ff-only
+```
+
+Se aparecer conflito ou alterações locais pendentes, confira `git status` antes de prosseguir.
+
+### Alternância rápida
+
+```bash
+bash scripts/alternar-barra-kde.sh original
+bash scripts/alternar-barra-kde.sh personalizada
+bash scripts/alternar-barra-kde.sh backup
+bash scripts/alternar-barra-kde.sh status
+```
+
+**Execute os scripts como usuário normal, sem `sudo bash`.** O `sudo` é solicitado somente para operações administrativas específicas. Esses comandos pressupõem que você está na raiz do repositório.
+
+---
+
 ## Estrutura
 
 ```text
@@ -83,7 +161,7 @@ O mecanismo também guarda backups de segurança a cada transição e desabilita
 ## Validação
 
 ```bash
-bash -n scripts/*.sh
+for arquivo in scripts/*.sh; do bash -n "$arquivo" || exit 1; done
 bash scripts/kubuntu-hybrid-setup-v1.0.2.sh --dry-run
 ```
 
