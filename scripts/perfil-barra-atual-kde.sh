@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Perfil da barra observado em 16/11/2026 na kubuntu-vm.
 # KDE Plasma 6: painel superior + dock Krema inferior.
-# Uso: bash perfil-barra-atual-kde.sh {status|backup|aplicar|restaurar CAMINHO}
+# Uso: bash perfil-barra-atual-kde.sh {status|backup|instalar-dock|aplicar|restaurar CAMINHO}
 # Pastas sao criadas sob demanda; o layout Plasma deve existir apos o primeiro login.
 set -Eeuo pipefail
 
@@ -20,6 +20,64 @@ preparar_diretorios() {
   # Em uma instalacao limpa, os diretórios podem não existir.
   # Criar pastas e seguro; gerar um arquivo Plasma vazio nao e seguro.
   mkdir -p -- "$CONFIG_HOME" "$BACKUP_ROOT" || erro "Nao foi possivel criar diretorios de configuracao e backup."
+}
+
+instalar_krema() {
+  # A Krema e distribuida oficialmente em ppa:isac322/krema.
+  # Evita downloads executaveis arbitrarios e alteracoes desnecessarias.
+  if command -v krema >/dev/null 2>&1; then
+    echo "Dock Krema ja instalada: $(command -v krema)"
+    return 0
+  fi
+
+  [[ "${XDG_SESSION_TYPE:-}" == "wayland" ]] || erro "A Krema requer sessao Wayland."
+  [[ -r /etc/os-release ]] || erro "Nao foi possivel identificar a distribuicao."
+  local os_id version
+  os_id=$(sed -n 's/^ID=//p' /etc/os-release | head -1 | tr -d '"')
+  version=$(sed -n 's/^VERSION_ID=//p' /etc/os-release | head -1 | tr -d '"')
+  [[ "$os_id" == "ubuntu" && "$version" == "26.04" ]] ||
+    erro "Instalacao automatica homologada apenas para Kubuntu/Ubuntu 26.04; sistema: $os_id $version."
+
+  command -v sudo >/dev/null || erro "sudo nao encontrado."
+  command -v apt-get >/dev/null || erro "apt-get nao encontrado."
+  echo "Instalando Krema pelo PPA oficial do projeto (ppa:isac322/krema)."
+
+  if ! command -v add-apt-repository >/dev/null; then
+    sudo apt-get update || erro "Falha ao atualizar indice APT."
+    sudo apt-get install -y software-properties-common ||
+      erro "Falha ao instalar software-properties-common."
+  fi
+
+  if ! grep -RqsE 'isac322/krema|isac322-ubuntu-krema' /etc/apt/sources.list.d/ 2>/dev/null; then
+    sudo add-apt-repository -y ppa:isac322/krema ||
+      erro "Nao foi possivel adicionar o PPA do Krema."
+  fi
+  sudo apt-get update || erro "Falha no apt-get update."
+  local candidate simulation
+  candidate=$(LC_ALL=C apt-cache policy krema | awk '/Candidate:/{print $2;exit}')
+  [[ -n "$candidate" && "$candidate" != "(none)" ]] ||
+    erro "Pacote Krema indisponivel para esta versao do Kubuntu."
+  simulation=$(LC_ALL=C apt-get --simulate install krema 2>&1) ||
+    erro "Dependencias da Krema nao puderam ser resolvidas: $simulation"
+  if grep -q '^Remv ' <<< "$simulation"; then
+    echo "$simulation" >&2
+    erro "Instalacao cancelada: o APT removeria pacotes existentes."
+  fi
+  sudo apt-get install -y krema || erro "Falha ao instalar Krema."
+  command -v krema >/dev/null || erro "Krema nao encontrado apos a instalacao."
+  echo "Krema instalado com sucesso."
+}
+
+iniciar_krema() {
+  [[ "${XDG_SESSION_TYPE:-}" == "wayland" ]] ||
+    { echo "AVISO: Krema exige Wayland; inicie uma sessao Wayland." >&2; return 0; }
+  if pgrep -x krema >/dev/null; then
+    echo "Krema ja esta em execucao; para atualizar a aparencia, faca logout/login."
+    return 0
+  fi
+  mkdir -p -- "${XDG_STATE_HOME:-$HOME/.local/state}/kubuntu-hybrid"
+  (nohup krema >"${XDG_STATE_HOME:-$HOME/.local/state}/kubuntu-hybrid/krema.log" 2>&1 </dev/null &)
+  echo "Inicializacao da Krema solicitada. O pacote inclui autostart na sessao KDE."
 }
 
 verificar_layout() {
@@ -72,13 +130,11 @@ aplicar() {
   local id js b
   preparar_diretorios
   verificar_layout
-  if ! command -v krema >/dev/null; then
-    echo "AVISO: Krema nao esta instalado. O arquivo de preferencias sera criado, mas a dock nao aparecera ate instalar o aplicativo." >&2
-  fi
   id=$(painel_id)
   [[ -n "$id" ]] || erro "Nenhum painel com bandeja encontrado; nenhuma mudanca aplicada."
   b=$(backup)
   echo "Backup anterior: $b"
+  instalar_krema
 
   # Altera o painel em tempo real usando a API de scripts do Plasma.
   command -v busctl >/dev/null || erro "busctl nao encontrado."
@@ -96,7 +152,8 @@ aplicar() {
     kwriteconfig6 --file kremarc --group General --key "${pair%%=*}" "${pair#*=}"
   done
   kwriteconfig6 --file kremarc --group General --key PinnedLaunchers 'applications:org.kde.dolphin.desktop,applications:org.kde.konsole.desktop,applications:systemsettings.desktop'
-  echo "Perfil gravado. Faça logout/login para o Plasma e Krema relerem todas as opcoes."
+  iniciar_krema
+  echo "Perfil gravado. Faca logout/login para Plasma e Krema relerem todas as opcoes."
   echo "Nao foram removidos widgets, nem executada reinicializacao automatica."
 }
 
@@ -120,7 +177,8 @@ restaurar() {
 case "${1:-status}" in
   status) status ;;
   backup) backup ;;
+  instalar-dock) preparar_diretorios; instalar_krema; iniciar_krema ;;
   aplicar) aplicar ;;
   restaurar) restaurar "${2:-}" ;;
-  *) erro "Uso: $0 {status|backup|aplicar|restaurar CAMINHO}" ;;
+  *) erro "Uso: $0 {status|backup|instalar-dock|aplicar|restaurar CAMINHO}" ;;
 esac
