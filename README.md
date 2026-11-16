@@ -92,10 +92,21 @@ Fedora (DNF), CachyOS/Arch (Pacman/AUR) e openSUSE (Zypper/OBS) possuem detecç�
 ## Estrutura
 
 ```text
+install.sh                       # Entrada unica v2; detecta a distro e o perfil
+lib/
+├── platform.sh                 # Deteccao de distro/versao/familia
+├── core.sh                     # Backups, confirmacoes e seguranca APT
+├── krema.sh                    # Krema: PPA Ubuntu 26.04 / OBS Debian 13
+├── premium.sh                  # Tema KDE + wallpaper + dock
+└── dev.sh                      # Pacotes Developer e extras opt-in
 scripts/
-├── kubuntu-hybrid-setup-v1.0.2.sh  # Setup visual / ambiente dev
-├── perfil-barra-atual-kde.sh       # Instala/configura o painel + a dock Krema
-└── alternar-barra-kde.sh           # Alterna entre KDE original e personalizado
+├── kubuntu-hybrid-setup-v1.0.2.sh  # Instalador anterior para Kubuntu
+├── perfil-barra-atual-kde.sh       # Configura painel + dock (KDE)
+└── alternar-barra-kde.sh           # KDE original ↔ personalizado
+tests/
+├── fixtures/                   # Exemplos de /etc/os-release
+└── smoke.sh                    # Simulacoes e verificacoes
+.github/workflows/smoke.yml     # Testes automaticos no GitHub
 ```
 
 ## Requisitos
