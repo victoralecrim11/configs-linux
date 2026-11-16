@@ -59,9 +59,10 @@ setup_docker() {
     return
   fi
   apt_install_safe "Docker Engine distro" docker.io
-  local compose=""
+  local compose="" candidate p
   for p in docker-compose-v2 docker-compose-plugin docker-compose; do
-    if LC_ALL=C apt-cache policy "$p" 2>/dev/null | grep -Eq 'Candidate: (?!\(none\))'; then
+    candidate="$(LC_ALL=C apt-cache policy "$p" 2>/dev/null | awk '/Candidate:/{print $2;exit}')"
+    if [[ -n "$candidate" && "$candidate" != "(none)" ]]; then
       compose="$p"; break
     fi
   done
