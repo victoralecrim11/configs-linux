@@ -85,3 +85,11 @@ bash scripts/perfil-barra-atual-kde.sh restaurar "$HOME/.local/share/kubuntu-hyb
 O comando `aplicar` mantém os widgets existentes, e não remove aplicativos ou docks. Para reproduzir o ambiente completo em outra máquina, instale o Krema e os elementos visuais necessários usando o instalador original; o script de perfil **não instala dependências nem recria integralmente todos os widgets e arquivos de ícones**.
 
 **Segurança:** backups reais da sessão permanecem no computador, fora do repositório público, pois podem conter preferências e identificadores locais. Faça logout/login após aplicar o perfil para garantir que painel e Krema releiam as opções.
+
+### Primeira execução em outro computador
+
+O script `perfil-barra-atual-kde.sh` agora cria automaticamente `~/.config` e `${XDG_DATA_HOME:-$HOME/.local/share}/kubuntu-hybrid/perfis-barra` quando precisam ser utilizados. Os nomes são relativos ao usuário ativo, não à VM. **Não é necessário criar pastas manualmente.**
+
+Após instalar Kubuntu, faça login no KDE Plasma para que ele crie `plasma-org.kde.plasma.desktop-appletsrc` e o painel padrão. Esse arquivo **não** deve ser criado vazio pelo script. Para confirmar, execute `bash scripts/perfil-barra-atual-kde.sh status`. Depois, `bash scripts/perfil-barra-atual-kde.sh aplicar` ajusta o painel existente e grava as preferências da dock. O Krema deve estar instalado separadamente para a dock aparecer. Não copie backups com IDs específicos da VM para o GitHub público.
+
+Validação: sintaxe Bash e simulação de diretórios ausentes testadas com êxito em 16/11/2026, sem aplicar alterações na barra real.
