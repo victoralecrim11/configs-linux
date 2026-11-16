@@ -1,0 +1,4 @@
+ID=ubuntu
+VERSION_ID=26.04
+PRETTY_NAME="Kubuntu 26.04 LTS"
+ID_LIKE=debian
