@@ -2,81 +2,90 @@
 
 Scripts de personalização do **Kubuntu 26.04 LTS / KDE Plasma 6**, com visual inspirado em Windows 11, Garuda e dock no estilo macOS. Desenvolvidos e testados inicialmente na VM `kubuntu-vm`.
 
-## Comece aqui: instalar, clonar e executar
+## Comece aqui: instalador universal v2
 
-Após instalar o **Kubuntu 26.04 LTS**, entre na sessão KDE Plasma (Wayland) e abra o **Konsole**.
+O instalador `install.sh` **detecta automaticamente a distribuição** usando `/etc/os-release`. Na versão 2, a instalação é habilitada apenas no **Kubuntu/Ubuntu 26.04** e no **Debian 13 com KDE Plasma 6**. Fedora, CachyOS, Arch e openSUSE podem ser identificados, mas **não recebem instalações automáticas ainda**.
 
-### 1. Instale o Git
+### Instalação do zero
+
+Após instalar a distro e fazer o primeiro login no KDE Plasma, abra o Konsole:
 
 ```bash
 sudo apt update
 sudo apt install -y git
-```
-
-### 2. Clone o repositório
-
-```bash
 cd "$HOME"
 git clone https://github.com/victoralecrim11/configs-linux-kubunutu.git
 cd configs-linux-kubunutu
 ```
 
-Se já clonou, basta executar `cd ~/configs-linux-kubunutu`. Não faça o clone novamente na mesma pasta.
+Se você já clonou o projeto, **não clone novamente**: use `cd ~/configs-linux-kubunutu`.
 
-### 3. Confira os scripts (sem alterar o sistema)
-
-```bash
-ls scripts/
-for arquivo in scripts/*.sh; do bash -n "$arquivo" || exit 1; done
-bash scripts/kubuntu-hybrid-setup-v1.0.2.sh --dry-run
-```
-
-### 4. Salve o painel KDE original (antes de personalizar)
+### Diagnóstico, simulação e backup inicial
 
 ```bash
+bash install.sh --detect
+bash install.sh --profile full --dry-run
 bash scripts/alternar-barra-kde.sh salvar-original
 ```
 
-Execute após o primeiro login, quando o painel padrão do KDE já estiver carregado. Esta etapa permite restaurá-lo posteriormente.
+O último comando deve ser executado **antes de personalizar**, quando o painel padrão já existir. Isso preserva seu layout KDE original para alternância posterior. O `--dry-run` não modifica arquivos, não utiliza `sudo` e não adiciona repositórios.
 
-### 5. Aplique o perfil personalizado, com instalação da dock
+### Escolha um dos perfis
+
+| Perfil | Comando | O que instala |
+|---|---|---|
+| **Premium** (`visual`) | `bash install.sh --profile premium` | Breeze Dark, Papirus, wallpaper e painel superior com dock Krema |
+| **Developer** | `bash install.sh --profile dev` | Git, compiladores, Python, Java 21, Maven, PHP, Composer e utilitários |
+| **Full** | `bash install.sh --profile full` | Premium + Developer |
+
+Sem `--profile`, o instalador exibe uma seleção interativa no Konsole. Para automações não interativas, informe o perfil e `--yes` explicitamente (inclusive quando autorizar repositórios de terceiros). **Nunca execute `sudo bash install.sh`.** O script solicita `sudo` somente quando necessário.
+
+### Extras do perfil Developer (opcionais)
 
 ```bash
-bash scripts/alternar-barra-kde.sh personalizada
+bash install.sh --profile full --with-node --with-docker --with-dotnet --with-vscode
+```
+
+- `--with-node`: instala Node.js e npm da distribuição.
+- `--with-docker`: tenta Docker do repositório da distro, sem remover Podman automaticamente.
+- `--with-dotnet`: instala SDK .NET 10; no Debian, usa o feed oficial Microsoft com confirmação.
+- `--with-vscode`: usa o repositório oficial Microsoft para VS Code após confirmação.
+
+Os extras **não** são instalados implicitamente no perfil Dev ou Full. Isso evita adicionar serviços e repositórios que você talvez não queira. Pacotes indisponíveis são informados e instalações APT com remoção de dependências são bloqueadas.
+
+### Alternar KDE original ↔ Premium
+
+```bash
 bash scripts/alternar-barra-kde.sh status
+bash scripts/alternar-barra-kde.sh original
+bash scripts/alternar-barra-kde.sh personalizada
+bash scripts/alternar-barra-kde.sh backup
 ```
 
-Esse fluxo aplica o painel superior, instala o Krema caso não esteja presente (via PPA e APT) e configura a dock. Pode solicitar sua senha para instalar pacotes. Faça logout/login se alguma mudança não aparecer imediatamente.
+A alternância controla o painel e a dock Krema, mas **não desinstala ferramentas Developer**. A reinstalação do Krema usa PPA no Ubuntu 26.04 e OBS assinado por chave dedicada no Debian 13. Em uma instalação nova, faça logout/login caso os efeitos ainda não estejam visíveis.
 
-### 6. Opcional: personalize tema, ícones e wallpaper
-
-Para aplicar recursos visuais adicionais sem refazer o painel nem a dock:
-
-```bash
-bash scripts/kubuntu-hybrid-setup-v1.0.2.sh --profile visual --no-panel --no-dock
-```
-
-Para incluir ferramentas de desenvolvimento, veja `--profile dev` e `--profile full` no `--help` e revise os pacotes antes de executar.
-
-### Atualize o repositório depois
+### Atualizar os scripts
 
 ```bash
 cd "$HOME/configs-linux-kubunutu"
 git pull --ff-only
 ```
 
-Se aparecer conflito ou alterações locais pendentes, confira `git status` antes de prosseguir.
+Se aparecerem conflitos, verifique `git status` antes de atualizar. Os backups pessoais são armazenados no seu computador, fora do repositório público.
 
-### Alternância rápida
+### Testes e segurança
 
 ```bash
-bash scripts/alternar-barra-kde.sh original
-bash scripts/alternar-barra-kde.sh personalizada
-bash scripts/alternar-barra-kde.sh backup
-bash scripts/alternar-barra-kde.sh status
+bash tests/smoke.sh
+bash install.sh --profile premium --dry-run
+bash install.sh --profile dev --dry-run
 ```
 
-**Execute os scripts como usuário normal, sem `sudo bash`.** O `sudo` é solicitado somente para operações administrativas específicas. Esses comandos pressupõem que você está na raiz do repositório.
+Os testes verificam sintaxe e seleção de distro/perfil **sem instalar pacotes**. A primeira instalação real da v2 no Debian 13 e em Kubuntu 26.04 deve ser validada em VM ou ambiente descartável antes de usar na máquina principal. A lógica de pacotes é baseada em listas revisadas e fontes oficiais do projeto; o instalador **não pesquisa e executa comandos arbitrários da internet**.
+
+### Projetos de suporte futuro
+
+Fedora (DNF), CachyOS/Arch (Pacman/AUR) e openSUSE (Zypper/OBS) possuem detecção de família no módulo `lib/platform.sh`, mas **não possuem backend de instalação homologado**. O instalador interrompe a instalação nesses sistemas para proteger o ambiente.
 
 ---
 
@@ -96,7 +105,7 @@ scripts/
 - Bash, systemd e acesso administrativo **apenas quando solicitado pelo instalador**.
 - Revise os scripts e seus repositórios externos antes da execução.
 
-## Instalação / personalização
+## Instalação manual antiga (script v1.0.2, legado)
 
 No diretório raiz do repositório:
 
