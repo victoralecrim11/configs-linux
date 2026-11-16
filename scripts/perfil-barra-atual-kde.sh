@@ -2,20 +2,33 @@
 # Perfil da barra observado em 16/11/2026 na kubuntu-vm.
 # KDE Plasma 6: painel superior + dock Krema inferior.
 # Uso: bash perfil-barra-atual-kde.sh {status|backup|aplicar|restaurar CAMINHO}
+# Pastas sao criadas sob demanda; o layout Plasma deve existir apos o primeiro login.
 set -Eeuo pipefail
 
 CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 PLASMA="$CONFIG_HOME/plasma-org.kde.plasma.desktop-appletsrc"
 SHELLRC="$CONFIG_HOME/plasmashellrc"
 KREMA="$CONFIG_HOME/kremarc"
-BACKUP_ROOT="$HOME/.local/share/kubuntu-hybrid/perfis-barra"
+BACKUP_ROOT="${XDG_DATA_HOME:-$HOME/.local/share}/kubuntu-hybrid/perfis-barra"
 
 erro() { printf 'ERRO: %s\n' "$*" >&2; exit 1; }
 [[ "$EUID" -ne 0 ]] || erro "Execute como usuario comum, sem sudo."
 command -v kwriteconfig6 >/dev/null || erro "kwriteconfig6 nao encontrado."
 [[ "${XDG_CURRENT_DESKTOP:-}" == *KDE* || "${XDG_CURRENT_DESKTOP:-}" == *Plasma* ]] || erro "Abra uma sessao KDE Plasma."
 
+preparar_diretorios() {
+  # Em uma instalacao limpa, os diretórios podem não existir.
+  # Criar pastas e seguro; gerar um arquivo Plasma vazio nao e seguro.
+  mkdir -p -- "$CONFIG_HOME" "$BACKUP_ROOT" || erro "Nao foi possivel criar diretorios de configuracao e backup."
+}
+
+verificar_layout() {
+  [[ -s "$PLASMA" ]] || erro "O Plasma ainda nao criou $PLASMA. Inicie o KDE, faca login e confira se existe um painel. Nao criaremos um layout vazio."
+}
+
+
 painel_id() {
+  [[ -s "$PLASMA" ]] || return 0
   # Procura o painel que contem a bandeja do sistema; sem IDs fixos da VM.
   awk '
     /^\[Containments\]\[[0-9]+\]$/ { id=$0; sub(/^\[Containments\]\[/,"",id);sub(/\]$/,"",id); next }
@@ -25,9 +38,9 @@ painel_id() {
 }
 
 backup() {
-  mkdir -p "$BACKUP_ROOT"
+  preparar_diretorios
   local dest="$BACKUP_ROOT/$(date +%Y%m%d-%H%M%S)-$$"
-  mkdir -p "$dest"
+  mkdir -p -- "$dest"
   for name in plasma-org.kde.plasma.desktop-appletsrc plasmashellrc kremarc; do
     [[ ! -f "$CONFIG_HOME/$name" ]] || cp -p "$CONFIG_HOME/$name" "$dest/$name"
   done
@@ -35,6 +48,10 @@ backup() {
 }
 
 status() {
+  if [[ ! -s "$PLASMA" ]]; then
+    echo "Painel KDE: configuracao ainda nao criada. Entre no Plasma e configure um painel antes de aplicar."
+    return 0
+  fi
   local id
   id=$(painel_id)
   echo "Painel KDE: ${id:-nao encontrado}"
@@ -53,7 +70,11 @@ status() {
 
 aplicar() {
   local id js b
-  [[ -f "$PLASMA" ]] || erro "Arquivo de paineis nao encontrado."
+  preparar_diretorios
+  verificar_layout
+  if ! command -v krema >/dev/null; then
+    echo "AVISO: Krema nao esta instalado. O arquivo de preferencias sera criado, mas a dock nao aparecera ate instalar o aplicativo." >&2
+  fi
   id=$(painel_id)
   [[ -n "$id" ]] || erro "Nenhum painel com bandeja encontrado; nenhuma mudanca aplicada."
   b=$(backup)
@@ -81,6 +102,7 @@ aplicar() {
 
 restaurar() {
   local origem="${1:-}"
+  preparar_diretorios
   [[ -n "$origem" && -d "$origem" ]] || erro "Indique a pasta de backup: restaurar CAMINHO"
   [[ "$origem" == "$BACKUP_ROOT/"* ]] || erro "Aceito apenas backup gerado em $BACKUP_ROOT."
   [[ -f "$origem/plasma-org.kde.plasma.desktop-appletsrc" ]] || erro "Backup sem layout Plasma."
