@@ -53,7 +53,7 @@ apt_install_safe() {
   (("${#to_install[@]}")) || return 0
   simulation="$(LC_ALL=C apt-get --simulate install "${to_install[@]}" 2>&1)" ||
     die "Simulacao APT falhou ($label): $simulation"
-  if grep -Eq '^Remv ' <<< "$simulation"; then
+  if grep -Eq '^(Remv|Purg) ' <<< "$simulation"; then
     printf '%s\n' "$simulation" >&2
     die "APT removeria pacotes existentes. Cancelando $label."
   fi
