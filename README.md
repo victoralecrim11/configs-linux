@@ -70,3 +70,18 @@ A validação sintática e a simulação do instalador passaram na VM. **Não ex
 - Mudanças visuais podem exigir sair da sessão e entrar novamente.
 - Recursos extras, incluindo o Krema e repositórios externos, dependem de disponibilidade e compatibilidade.
 - Guarde backups fora do Git antes de experimentar novas alterações.
+
+## Perfil da barra atualmente em uso (capturado em 16/11/2026)
+
+O script `scripts/perfil-barra-atual-kde.sh` reflete a configuração verificada na VM: painel Plasma **superior**, 36 px, não flutuante, sempre visível; dock **Krema** com fundo opaco, atraso de ocultação de 1600 ms, exibição de 100 ms e lançadores Dolphin/Konsole/Configurações do Sistema.
+
+```bash
+bash scripts/perfil-barra-atual-kde.sh status     # apenas leitura
+bash scripts/perfil-barra-atual-kde.sh backup     # salva copia local
+bash scripts/perfil-barra-atual-kde.sh aplicar    # reaplica perfil visual
+bash scripts/perfil-barra-atual-kde.sh restaurar "$HOME/.local/share/kubuntu-hybrid/perfis-barra/NOME-DO-BACKUP"
+```
+
+O comando `aplicar` mantém os widgets existentes, e não remove aplicativos ou docks. Para reproduzir o ambiente completo em outra máquina, instale o Krema e os elementos visuais necessários usando o instalador original; o script de perfil **não instala dependências nem recria integralmente todos os widgets e arquivos de ícones**.
+
+**Segurança:** backups reais da sessão permanecem no computador, fora do repositório público, pois podem conter preferências e identificadores locais. Faça logout/login após aplicar o perfil para garantir que painel e Krema releiam as opções.
