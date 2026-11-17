@@ -89,11 +89,18 @@ capture() {
   # DENTRO do snapshot para restauracao fiel em outra instalacao.
   if command -v kreadconfig6 >/dev/null 2>&1 &&
      command -v kwriteconfig6 >/dev/null 2>&1; then
-    local effective_icons
+    local effective_icons effective_colors
     effective_icons="$(kreadconfig6 --file kdeglobals --group Icons --key Theme 2>/dev/null || true)"
-    if [[ -n "$effective_icons" && -f "$dir/config/kdeglobals" ]]; then
-      kwriteconfig6 --file "$dir/config/kdeglobals" --group Icons --key Theme "$effective_icons" ||
-        return 1
+    effective_colors="$(kreadconfig6 --file kdeglobals --group General --key ColorScheme 2>/dev/null || true)"
+    if [[ -f "$dir/config/kdeglobals" ]]; then
+      if [[ -n "$effective_icons" ]]; then
+        kwriteconfig6 --file "$dir/config/kdeglobals" --group Icons --key Theme "$effective_icons" ||
+          return 1
+      fi
+      if [[ -n "$effective_colors" ]]; then
+        kwriteconfig6 --file "$dir/config/kdeglobals" --group General --key ColorScheme "$effective_colors" ||
+          return 1
+      fi
     fi
   fi
   if [[ "$assets" == 1 ]]; then
