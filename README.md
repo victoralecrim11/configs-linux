@@ -94,6 +94,30 @@ Para automações não interativas, `excluir NOME --yes` permite pular a confirm
 
 **Segurança:** não use nomes com barras ou espaços; use `a-z`, `0-9`, `-` e `_` (até 40 caracteres). `criar` não sobrescreve nomes existentes; `editar` preserva a versão anterior; `duplicar` e `renomear` recusam nomes já usados. Os snapshots da lixeira podem ser recuperados com `restaurar-excluido`.
 
+### Sweet recuperado: tema Candy, barra centralizada e Krema opcional
+
+O perfil `sweet` foi corrigido para usar **Sweet + esquema de cores Sweet + candy-icons**, com o **gerenciador de tarefas nativo do KDE centralizado** e a dock Krema **desligada por padrão**. O wallpaper permanece no lugar. A versão anterior foi arquivada automaticamente em `~/.local/share/linux-hybrid/profiles/.historico/`.
+
+```bash
+cd ~/configs-linux
+
+# Ativar o Sweet corrigido, com a barra nativa e sem Krema (padrão)
+bash scripts/perfis-kde.sh aplicar sweet
+
+# Escolher o comportamento da dock somente nesta aplicação
+bash scripts/perfis-kde.sh aplicar sweet --dock on
+bash scripts/perfis-kde.sh aplicar sweet --dock off
+
+# Simular antes de mexer no KDE
+bash scripts/perfis-kde.sh aplicar sweet --dock off --dry-run
+```
+
+**Importante:** `--dock on|off|keep` em `aplicar` é uma **sobrescrita temporária** da opção de dock salva; não altera o snapshot do perfil. Para tornar a alteração definitiva, utilize `editar sweet --recursos --dock on|off` depois de configurar o visual. Caso o perfil não contenha o applet de tarefas, o gerenciador bloqueia `--dock off`, evitando uma barra vazia sem alternador de aplicativos.
+
+A dock animada com `--dock on` foi testada com `Edge=1`, `FloatingMarginReference=1`, `FloatingMargin=8` e `VisibilityMode=0`. **No Krema 0.13.0 ela ainda pode cobrir partes de algumas janelas**, pois a reserva de espaço não é garantida. Para evitar sobreposição, use o Sweet padrão sem Krema.
+
+A instalação do tema Sweet ou dos Candy Icons não é automática ao aplicar o snapshot: eles precisam estar disponíveis no sistema. O comando `editar ... --recursos` preserva cópias locais quando existirem. Os backups de configuração ficam no computador, não no GitHub.
+
 ### Consultar, alternar e fazer backup de segurança
 
 ```bash
@@ -113,7 +137,7 @@ As pastas pessoais são:
 ```text
 ~/.local/share/linux-hybrid/profiles/
 ├── hybrid-premium/          # Snapshot atual salvo: Windows Eleven
-├── sweet/                   # Perfil Sweet antigo
+├── sweet/                   # Sweet com icones centralizados, Krema off
 ├── kde-padrao-centralizado/ # Barra KDE centralizada sem Krema
 ├── .historico/              # Versoes antigas e backups
 └── .lixeira/                # Perfis excluidos, recuperaveis
@@ -307,7 +331,7 @@ Se você já tem o perfil salvo e fez alguma modificação, use `atualizar kde-p
 bash scripts/perfis-kde.sh status
 bash scripts/perfis-kde.sh listar
 bash scripts/perfis-kde.sh aplicar kde-padrao-centralizado   # KDE centralizado, sem Krema
-bash scripts/perfis-kde.sh aplicar sweet                     # Sweet anterior, com Krema
+bash scripts/perfis-kde.sh aplicar sweet                     # Sweet corrigido com barra KDE (sem Krema)
 bash scripts/perfis-kde.sh aplicar kubuntu-painel-padrao      # Kubuntu original + Krema
 ```
 
