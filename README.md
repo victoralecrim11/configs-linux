@@ -13,23 +13,6 @@ O projeto tem **dois tipos diferentes de perfil**:
 
 **Uma instalação Premium não é um perfil visual salvo.** Alterar a aparência não reinstala programas; instalar ferramentas Developer não muda necessariamente o visual.
 
-### Estado atual verificado — VM Kubuntu, 17/11/2026
-
-O usuário personalizou o `hybrid-premium`. O ambiente real foi inspecionado na VM **Kubuntu 26.04.1 LTS, KDE Plasma 6.6.6, Wayland**:
-
-| Elemento | Ativo agora | Hybrid Premium antigo |
-| --- | --- | --- |
-| Tema global | **Windows Eleven Dark** (`windows.eleven.Dark.P6`) | `org.kubuntudark.desktop` |
-| Ícones | **Windows-Eleven** | Papirus-Dark |
-| Esquema de cores | **AbsoluteDark** | Kubuntu Dark / esquema anterior |
-| Cor de destaque | `139,92,246` (roxo) | Roxo |
-| Painel | Superior, 44 px | Layout anterior |
-| Dock | Krema em execução (`dock=on`) | Krema ativa |
-
-**O snapshot `hybrid-premium` foi atualizado para o novo visual.** A versão antiga foi preservada em `~/.local/share/linux-hybrid/profiles/.historico/`; portanto, é possível recuperar o visual anterior. A atualização foi feita **sem reiniciar o desktop**. Tema, ícones efetivos, cores e painel foram comparados com o snapshot após a gravação. O gerenciador agora registra também o **tema de ícones e o esquema de cores efetivos** em `kdeglobals`, mesmo quando são herdados do tema global.
-
-**Importante:** o snapshot real reside **somente na VM**, não no GitHub. Ao clonar o código em outra máquina, o usuário precisa criar ou importar os próprios snapshots e instalar os temas/widgets necessários.
-
 ### Instalar ou atualizar o repositório
 
 Se ainda não clonou:
@@ -335,25 +318,6 @@ bash scripts/perfis-kde.sh aplicar kubuntu-painel-padrao      # Kubuntu original
 ---
 
 ## Gerenciador de perfis visuais KDE v2.1 — Original, Hybrid Premium, Sweet e outros
-
-### Validação em ambiente real (17/11/2026)
-
-Testado no **Kubuntu 26.04.1 LTS**, sessão **KDE Plasma/Wayland** com **Krema** ativa. Foi constatado que o ambiente corresponde ao **Hybrid Premium**: Kubuntu Dark, Papirus-Dark, destaque roxo, painel Plasma com configuração superior e dock Krema. O snapshot anterior existia somente no gerenciador legado como `personalizada`; **não existia nenhum perfil salvo no gerenciador KDE v2.1**.
-
-Após revisar e executar os testes, foi criado localmente o perfil nomeado:
-
-```bash
-bash scripts/perfis-kde.sh salvar hybrid-premium --recursos --dock on
-bash scripts/perfis-kde.sh detalhes hybrid-premium
-bash scripts/perfis-kde.sh status
-```
-
-O snapshot guardou configurações e aproximadamente **183 MB de recursos locais de usuário**. Uma reaplicação real desse mesmo perfil também funcionou: Plasma Shell retornou a `active`, Krema permaneceu em execução, o conteúdo do arquivo de painel antes/depois continuou idêntico e foi criado um backup automático no histórico. Isso **não demonstra** compatibilidade integral de restauração entre distros ou monitores diferentes.
-
-Os testes isolados `tests/smoke.sh` e `tests/perfis-kde-smoke.sh` foram executados na VM e passaram. A execução do GitHub Actions **[#28](https://github.com/victoralecrim11/configs-linux/actions/runs/44087441728)** também terminou com sucesso após corrigir erros no teste de perfis (duplicações/saída em pipe) e o identificador dos backups.
-
-**Privacidade e portabilidade:** o diretório `~/.local/share/linux-hybrid/profiles/hybrid-premium/` permanece **somente no computador em que o perfil foi salvo**; o GitHub guarda o código que cria/aplica o perfil, **não** o snapshot real de configurações e arquivos pessoais. Faça uma cópia privada dele se quiser migrar para outra máquina, com os temas/widgets instalados no destino. Em outra máquina, `listar` não mostrará este perfil até que seja criado ou copiado.
-
 
 O **`scripts/perfis-kde.sh`** permite salvar, listar, inspecionar e aplicar **vários perfis de aparência com nomes diferentes**, sem sobrescrever a configuração anterior. É independente dos perfis de **instalação** do `install.sh`:
 
@@ -781,20 +745,18 @@ A validação sintática e a simulação do instalador passaram na VM. **Não ex
 - Recursos extras, incluindo o Krema e repositórios externos, dependem de disponibilidade e compatibilidade.
 - Guarde backups fora do Git antes de experimentar novas alterações.
 
-## Perfil da barra atualmente em uso (capturado em 16/11/2026)
+## Script legado de configuração do painel e da dock
 
-O script `scripts/perfil-barra-atual-kde.sh` reflete a configuração verificada na VM: painel Plasma **superior**, 36 px, não flutuante, sempre visível; dock **Krema** com fundo opaco, atraso de ocultação de 1600 ms, exibição de 100 ms e lançadores Dolphin/Konsole/Configurações do Sistema.
+O `scripts/perfil-barra-atual-kde.sh` ainda está disponível para manutenção e migração de instalações antigas. Para alternar **perfis visuais nomeados**, prefira `scripts/perfis-kde.sh`.
 
 ```bash
-bash scripts/perfil-barra-atual-kde.sh status     # apenas leitura
-bash scripts/perfil-barra-atual-kde.sh backup     # salva copia local
-bash scripts/perfil-barra-atual-kde.sh aplicar    # reaplica perfil visual
+bash scripts/perfil-barra-atual-kde.sh status
+bash scripts/perfil-barra-atual-kde.sh backup
+bash scripts/perfil-barra-atual-kde.sh aplicar
 bash scripts/perfil-barra-atual-kde.sh restaurar "$HOME/.local/share/kubuntu-hybrid/perfis-barra/NOME-DO-BACKUP"
 ```
 
-O comando `aplicar` preserva os widgets existentes e instala o Krema pelo PPA quando necessário no Kubuntu 26.04; ele não recria integralmente todos os arquivos de ícones e componentes visuais de terceiros.
-
-**Segurança:** backups reais da sessão permanecem no computador, fora do repositório público, pois podem conter preferências e identificadores locais. Faça logout/login após aplicar o perfil para garantir que painel e Krema releiam as opções.
+**Atenção:** o comando legado `aplicar` reconfigura o painel KDE e pode modificar a aparência atual. Faça backup antes de usá-lo.
 
 ### Primeira execução em outro computador
 
