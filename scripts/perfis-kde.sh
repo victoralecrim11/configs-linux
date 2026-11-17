@@ -439,6 +439,7 @@ apply_profile() {
     case "$override" in on|off|keep) dock="$override" ;; *) die "Override de dock invalido: $override";; esac
   fi
   if [[ "$dock" == "off" ]] && [[ -f "$dir/config/$PLASMA" ]] &&
+     grep -Eq '^\[Containments\]\[[0-9]+\]' "$dir/config/$PLASMA" &&
      ! grep -Eq "plugin=org.kde.plasma.(icontasks|taskmanager)" "$dir/config/$PLASMA"; then
     die "Perfil sem gerenciador de tarefas. Nao e seguro desativar a dock: restaure primeiro um painel com icontasks ou mantenha --dock on."
   fi
