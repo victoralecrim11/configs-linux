@@ -61,6 +61,38 @@ grep -q 'layout=original' "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
 [[ ! -e "$CONFIG/kwinrc" ]] || { echo 'ERRO: arquivo ausente deveria ser removido' >&2; exit 1; }
 grep -q '^Hidden=true$' "$CONFIG/autostart/com.bhyoo.krema.autostart.desktop"
 bash "$SCRIPT" aplicar sweet >/dev/null
+# sweet foi salvo com dock=keep: deve manter override de autostart anterior.
+grep -q '^Hidden=true
+grep -q 'layout=sweet' "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+grep -q 'someKWinEffect=true' "$CONFIG/kwinrc"
+[[ -f "$XDG_DATA_HOME/color-schemes/sweet.colors" ]]
+bash "$SCRIPT" status | grep -q 'sweet'
+
+# Atualizar mantem a versao anterior em historico.
+printf 'layout=sweet-atualizado\n' > "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+bash "$SCRIPT" atualizar sweet --dock keep >/dev/null
+grep -q 'layout=sweet-atualizado' "$STATE/sweet/config/plasma-org.kde.plasma.desktop-appletsrc"
+find "$STATE/.historico" -maxdepth 1 -type d -name 'sweet-*' | grep -q sweet
+
+# Um erro no start deve restaurar automaticamente as configs anteriores.
+printf 'layout=antes-da-falha\n' > "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+export FAIL_FIRST_START="$TMP/falha"
+if bash "$SCRIPT" aplicar original >"$TMP/falha.log" 2>&1; then
+  echo 'ERRO: deveria abortar quando Plasma nao inicia' >&2; exit 1
+fi
+unset FAIL_FIRST_START
+grep -q 'layout=antes-da-falha' "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+printf 'layout=temporario\n' > "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+bash "$SCRIPT" restaurar-ultimo >/dev/null
+grep -q 'layout=antes-da-falha' "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+
+mkdir -p "$XDG_DATA_HOME/kubuntu-hybrid/perfis-alternancia/personalizada"
+printf 'layout=legado\n' > "$XDG_DATA_HOME/kubuntu-hybrid/perfis-alternancia/personalizada/plasma-org.kde.plasma.desktop-appletsrc"
+touch "$XDG_DATA_HOME/kubuntu-hybrid/perfis-alternancia/personalizada/.snapshot"
+bash "$SCRIPT" importar-legado personalizada >/dev/null
+bash "$SCRIPT" detalhes personalizada | grep -q 'kind=legacy'
+echo '[OK] Perfis KDE: salvar, proteger, listar, simular, aplicar, rollback, atualizar, recursos e legado.'
+ "$CONFIG/autostart/com.bhyoo.krema.autostart.desktop"
 grep -q 'theme=Sweet' "$CONFIG/kdeglobals"
 grep -q 'layout=sweet' "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
 grep -q 'someKWinEffect=true' "$CONFIG/kwinrc"
