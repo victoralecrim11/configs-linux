@@ -91,6 +91,25 @@ Fedora (DNF), CachyOS/Arch (Pacman/AUR) e openSUSE (Zypper/OBS) possuem detecç�
 
 ## Gerenciador de perfis visuais KDE v2.1 — Original, Hybrid Premium, Sweet e outros
 
+### Validação em ambiente real (17/11/2026)
+
+Testado no **Kubuntu 26.04.1 LTS**, sessão **KDE Plasma/Wayland** com **Krema** ativa. Foi constatado que o ambiente corresponde ao **Hybrid Premium**: Kubuntu Dark, Papirus-Dark, destaque roxo, painel Plasma com configuração superior e dock Krema. O snapshot anterior existia somente no gerenciador legado como `personalizada`; **não existia nenhum perfil salvo no gerenciador KDE v2.1**.
+
+Após revisar e executar os testes, foi criado localmente o perfil nomeado:
+
+```bash
+bash scripts/perfis-kde.sh salvar hybrid-premium --recursos --dock on
+bash scripts/perfis-kde.sh detalhes hybrid-premium
+bash scripts/perfis-kde.sh status
+```
+
+O snapshot guardou configurações e aproximadamente **183 MB de recursos locais de usuário**. Uma reaplicação real desse mesmo perfil também funcionou: Plasma Shell retornou a `active`, Krema permaneceu em execução, o conteúdo do arquivo de painel antes/depois continuou idêntico e foi criado um backup automático no histórico. Isso **não demonstra** compatibilidade integral de restauração entre distros ou monitores diferentes.
+
+Os testes isolados `tests/smoke.sh` e `tests/perfis-kde-smoke.sh` foram executados na VM e passaram. A execução do GitHub Actions **[#28](https://github.com/victoralecrim11/configs-linux/actions/runs/44087441728)** também terminou com sucesso após corrigir erros no teste de perfis (duplicações/saída em pipe) e o identificador dos backups.
+
+**Privacidade e portabilidade:** o diretório `~/.local/share/linux-hybrid/profiles/hybrid-premium/` permanece **somente no computador em que o perfil foi salvo**; o GitHub guarda o código que cria/aplica o perfil, **não** o snapshot real de configurações e arquivos pessoais. Faça uma cópia privada dele se quiser migrar para outra máquina, com os temas/widgets instalados no destino. Em outra máquina, `listar` não mostrará este perfil até que seja criado ou copiado.
+
+
 O **`scripts/perfis-kde.sh`** permite salvar, listar, inspecionar e aplicar **vários perfis de aparência com nomes diferentes**, sem sobrescrever a configuração anterior. É independente dos perfis de **instalação** do `install.sh`:
 
 - **Premium / Dev / Full:** instalam programas e preparam o sistema.
