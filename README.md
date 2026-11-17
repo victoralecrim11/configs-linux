@@ -94,6 +94,39 @@ Para automações não interativas, `excluir NOME --yes` permite pular a confirm
 
 **Segurança:** não use nomes com barras ou espaços; use `a-z`, `0-9`, `-` e `_` (até 40 caracteres). `criar` não sobrescreve nomes existentes; `editar` preserva a versão anterior; `duplicar` e `renomear` recusam nomes já usados. Os snapshots da lixeira podem ser recuperados com `restaurar-excluido`.
 
+### Alternância automática do painel ao ativar ou desativar a Krema
+
+O gerenciador ajusta a **posição do painel KDE** e a **visibilidade da Krema** em conjunto, sem remover widgets nem alterar os perfis salvos.
+
+| Ação | Painel KDE | Krema |
+| --- | --- | --- |
+| **`dock on`** | Topo, sempre visível, mantendo seus ícones | Inferior, oculta automaticamente; aparece quando o cursor alcança a borda inferior |
+| **`dock off`** | Inferior, com os ícones centralizados | Fechada e desativada na inicialização |
+| **`aplicar NOME --dock on`** | Aplica o perfil e depois posiciona o painel no topo | Inicia Krema com ocultação automática |
+| **`aplicar NOME --dock off`** | Aplica o perfil e depois posiciona o painel embaixo | Mantém Krema desligada |
+| **`aplicar NOME --dock keep`** | Mantém a posição do painel que vem do snapshot | Não muda o estado da Krema |
+
+```bash
+cd ~/configs-linux
+
+# Usar o tema que ja esta ativo sem recarregar todo o perfil:
+bash scripts/perfis-kde.sh dock on       # painel superior + dock oculta
+bash scripts/perfis-kde.sh dock off      # barra inferior + sem dock
+
+# Fazer a mesma alternancia ao carregar um perfil visual:
+bash scripts/perfis-kde.sh aplicar sweet --dock on
+bash scripts/perfis-kde.sh aplicar sweet --dock off
+
+# Conferir os perfis e o ultimo estado registrado:
+bash scripts/perfis-kde.sh status
+```
+
+**Detalhes de auto-hide (Krema 0.13.0):** `VisibilityMode=1` (AutoHide), `RevealTriggerLocation=0` (borda da tela), `ShowDelay=100` ms, `HideDelay=700` ms, posição inferior (`Edge=1`) e distância à borda de 8 px (`FloatingMarginReference=0`, `FloatingMargin=8`). A Krema permanece animada, mas recolhe automaticamente após o cursor sair. O painel Plasma fica sempre visível, tanto embaixo quanto no topo, sem ocultação automática.
+
+**Atenção:** use esses comandos para ligar/desligar a dock e mover o painel **juntos**. Executar `krema` ou `pkill krema` manualmente **não aciona automaticamente** a mudança de posição do painel. A ativação requer Krema instalada e sessão **Wayland**. Cada troca faz um backup local em `~/.local/share/linux-hybrid/profiles/.historico/`, sem atualizar o snapshot do perfil. Para recuperar uma aplicação anterior de perfil, existe `restaurar-ultimo`.
+
+A escolha `--dock on|off` no comando `aplicar` é temporária: o perfil `sweet` pode continuar salvo como `dock=off`, mesmo quando `dock on` está ativo na sessão atual. Para não ficar sem tarefas, o gerenciador recusa desligar a Krema em perfis que não possuem gerenciador de tarefas no painel.
+
 ### Sweet recuperado: tema Candy, barra centralizada e Krema opcional
 
 O perfil `sweet` foi corrigido para usar **Sweet + esquema de cores Sweet + candy-icons**, com o **gerenciador de tarefas nativo do KDE centralizado** e a dock Krema **desligada por padrão**. O wallpaper permanece no lugar. A versão anterior foi arquivada automaticamente em `~/.local/share/linux-hybrid/profiles/.historico/`.
@@ -114,7 +147,7 @@ bash scripts/perfis-kde.sh aplicar sweet --dock off --dry-run
 
 **Importante:** `--dock on|off|keep` em `aplicar` é uma **sobrescrita temporária** da opção de dock salva; não altera o snapshot do perfil. Para tornar a alteração definitiva, utilize `editar sweet --recursos --dock on|off` depois de configurar o visual. Caso o perfil não contenha o applet de tarefas, o gerenciador bloqueia `--dock off`, evitando uma barra vazia sem alternador de aplicativos.
 
-A dock animada com `--dock on` foi testada com `Edge=1`, `FloatingMarginReference=1`, `FloatingMargin=8` e `VisibilityMode=0`. **No Krema 0.13.0 ela ainda pode cobrir partes de algumas janelas**, pois a reserva de espaço não é garantida. Para evitar sobreposição, use o Sweet padrão sem Krema.
+O comportamento atual de `--dock on` usa **ocultação automática** (`VisibilityMode=1`) e move a barra KDE para o topo, evitando manter a dock sempre sobre as janelas. A configuração anterior com `VisibilityMode=0` era o comportamento histórico do setup. Veja a seção **Alternância automática do painel ao ativar ou desativar a Krema**.
 
 A instalação do tema Sweet ou dos Candy Icons não é automática ao aplicar o snapshot: eles precisam estar disponíveis no sistema. O comando `editar ... --recursos` preserva cópias locais quando existirem. Os backups de configuração ficam no computador, não no GitHub.
 
@@ -420,11 +453,11 @@ Use `--dock on` em vez de `keep` caso queira **ativar** o Krema com o Sweet; use
 
 **Importante:** o script **não baixa nem instala automaticamente o tema Sweet**. Ele registra o estado **depois** que você configurá-lo no KDE. Também não captura pacotes de sistema, applets não instalados ou temas disponíveis somente em `/usr/share`. Para reproduzir em outra distro, instale os componentes faltantes antes de aplicar o snapshot.
 
-### Ajuste validado: Sweet com dock centralizada e sempre visível
+### Referência histórica: Sweet com Krema sempre visível (configuração anterior)
 
 Em **17/11/2026**, a configuração foi aplicada e testada na VM **Kubuntu 26.04.1 / Plasma 6.6.6 / Wayland / Krema 0.13.0**. O tema global **Sweet já estava selecionado** (`kdeglobals → KDE → LookAndFeelPackage=Sweet`). O comportamento que fazia a dock desaparecer era `kremarc → General → VisibilityMode=2` (**Dodge windows**), e não a ocultação do painel superior do Plasma.
 
-**Ajustes realizados apenas no Sweet:**
+**Configuração histórica anterior à alternância dinâmica (não é mais o padrão de `dock on`):**
 
 - **Krema inferior e centralizada**, com os aplicativos existentes preservados (`Edge=1`). O layout centralizado é nativo do Krema.
 - **`VisibilityMode=0`**, que significa **Always visible** segundo o `krema.kcfg` do projeto oficial. O modo anterior `2` significa **Dodge windows**.
@@ -476,7 +509,7 @@ O gerenciador **agora reinicia Krema automaticamente ao aplicar um perfil com `d
 
 **Resultado na VM:** os perfis `hybrid-premium` e `sweet` coexistem. O Sweet foi salvo com os recursos locais (~203 MB) e reaplicado em sessão real; o Plasma continuou ativo e o processo Krema foi reiniciado, mantendo `VisibilityMode=0`. Os backups locais não foram publicados no GitHub. A etapa posterior de correção reposiciona o painel inferior e valida a área de maximização das janelas via KWin.
 
-### Sweet atualizado — barra de tarefas na posição original (inferior) + dock animada
+### Referência histórica: Sweet com barra inferior e Krema sempre visível
 
 **Validado na VM Kubuntu 26.04.1 com Plasma 6.6.6, em 17/11/2026.** O perfil `sweet` foi atualizado **depois** de reposicionar o painel KDE para a borda inferior. A dock Krema ficou centralizada **imediatamente acima** da barra, preservando os lançadores e as preferências de animação; o perfil `hybrid-premium` continua com sua disposição própria e não foi alterado.
 
