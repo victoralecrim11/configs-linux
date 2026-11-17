@@ -112,7 +112,7 @@ fi
 grep -q conteudo-externo "$TMP/externo"
 echo '[OK] Perfis KDE: salvar, listar, simular, alternar, rollback, atualizar, recursos, legado e symlinks.'
  literal; evita sobrescrita no mesmo segundo.
-if find "$STATE/.historico" -mindepth 1 -maxdepth 1 -name '*\$*' | grep -q .; then
+if find "$STATE/.historico" -mindepth 1 -maxdepth 1 -name '*$*' | grep -q .; then
   echo '[ERRO] Nome de backup contem '
 [[ ! -e "$CONFIG/kwinrc" ]]
 grep -q '^Hidden=true$' "$CONFIG/autostart/com.bhyoo.krema.autostart.desktop"
