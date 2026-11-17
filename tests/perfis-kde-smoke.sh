@@ -64,6 +64,13 @@ output="$(bash "$SCRIPT" aplicar original --dry-run)"
 grep -q SIMULACAO <<< "$output"
 grep -q manualmente-alterado "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
 
+output="$(bash "$SCRIPT" aplicar original --dock off --dry-run)"
+grep -q 'dock=off' <<< "$output"
+output="$(bash "$SCRIPT" aplicar original --dock on --dry-run)"
+grep -q 'dock=on' <<< "$output"
+if bash "$SCRIPT" aplicar original --dock invalido --dry-run >/dev/null 2>&1; then
+  echo '[ERRO] Aceitou modo de dock invalido.' >&2; exit 1
+fi
 bash "$SCRIPT" aplicar original >/dev/null
 # Cada backup novo inclui data, horario e PID no nome.
 backup_count=$(find "$STATE/.historico" -mindepth 1 -maxdepth 1 -type d -name 'antes-original-*' -printf '%f\n' | grep -Ec 'antes-original-[0-9]{8}-[0-9]{6}-[0-9]+' || true)
