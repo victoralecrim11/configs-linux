@@ -63,7 +63,10 @@ grep -q SIMULACAO <<< "$output"
 grep -q manualmente-alterado "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
 
 bash "$SCRIPT" aplicar original >/dev/null
-# Backups devem ter sufixo PID, sem '
+# Cada backup novo inclui data, horario e PID no nome.
+backup_count=$(find "$STATE/.historico" -mindepth 1 -maxdepth 1 -type d -name 'antes-original-*' -printf '%f\n' | grep -Ec 'antes-original-[0-9]{8}-[0-9]{6}-[0-9]+' || true)
+[[ "$backup_count" -gt 0 ]] || { echo '[ERRO] Backup com PID nao encontrado' >&2; exit 1; }
+grep -q 'layout=original' "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
 [[ ! -e "$CONFIG/kwinrc" ]]
 grep -q '^Hidden=true$' "$CONFIG/autostart/com.bhyoo.krema.autostart.desktop"
 
