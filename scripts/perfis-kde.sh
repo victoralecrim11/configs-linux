@@ -186,7 +186,7 @@ restore_config() {
   done
 }
 dock_switch() {
-  local mode="$1" file="$CONFIG_DIR/$AUTOSTART"
+  local mode="$1" source_dir="${2:-}" file="$CONFIG_DIR/$AUTOSTART"
   case "$mode" in
     off)
       if [[ -f "$file" ]] && ! grep -q '^X-Linux-Hybrid-Managed=true$' "$file" &&
@@ -210,9 +210,31 @@ dock_switch() {
         fi
       fi
       if [[ "${XDG_SESSION_TYPE:-}" == wayland ]] && command -v krema >/dev/null 2>&1; then
-        if ! pgrep -x -u "$(id -u)" krema >/dev/null 2>&1; then
-          (nohup krema >/dev/null 2>&1 </dev/null &)
+        # O Krema pode manter uma copia do KConfig em memoria. Reinicie o processo
+        # em toda troca on->on para nao deixar o modo antigo da dock em uso.
+        if pgrep -x -u "$(id -u)" krema >/dev/null 2>&1; then
+          pkill -x -u "$(id -u)" krema 2>/dev/null || true
+          local tentativa
+          for tentativa in 1 2 3 4 5 6 7 8 9 10; do
+            pgrep -x -u "$(id -u)" krema >/dev/null 2>&1 || break
+            sleep 0.2
+          done
+          if pgrep -x -u "$(id -u)" krema >/dev/null 2>&1; then
+            msg "AVISO: nao foi possivel encerrar Krema; faca logout/login para recarregar o perfil."
+            return 0
+          fi
+          # A instancia anterior pode ter gravado preferencias ao encerrar.
+          # Reaplicar o arquivo do perfil DEPOIS do encerramento.
+          if [[ -n "$source_dir" ]]; then
+            if [[ -f "$source_dir/config/kremarc" && ! -L "$source_dir/config/kremarc" ]]; then
+              cp -p -- "$source_dir/config/kremarc" "$CONFIG_DIR/kremarc" ||
+                die "Falha ao recarregar as preferencias da dock."
+            else
+              rm -f -- "$CONFIG_DIR/kremarc"
+            fi
+          fi
         fi
+        (nohup krema >/dev/null 2>&1 </dev/null &)
       else
         msg "AVISO: Krema nao iniciada (instale Krema e use uma sessao Wayland)."
       fi
@@ -269,7 +291,7 @@ apply_profile() {
     systemctl --user start plasma-plasmashell.service || true
     die "Nao foi possivel ativar o perfil; backup: $backup"
   fi
-  dock_switch "$dock"
+  dock_switch "$dock" "$dir"
   printf '%s\n' "$name" > "$ACTIVE"
   msg "Perfil '$name' aplicado. Saia e entre na sessao caso temas/efeitos nao atualizem."
 }
