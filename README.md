@@ -187,6 +187,62 @@ Use `--dock on` em vez de `keep` caso queira **ativar** o Krema com o Sweet; use
 
 **Importante:** o script **não baixa nem instala automaticamente o tema Sweet**. Ele registra o estado **depois** que você configurá-lo no KDE. Também não captura pacotes de sistema, applets não instalados ou temas disponíveis somente em `/usr/share`. Para reproduzir em outra distro, instale os componentes faltantes antes de aplicar o snapshot.
 
+### Ajuste validado: Sweet com dock centralizada e sempre visível
+
+Em **17/11/2026**, a configuração foi aplicada e testada na VM **Kubuntu 26.04.1 / Plasma 6.6.6 / Wayland / Krema 0.13.0**. O tema global **Sweet já estava selecionado** (`kdeglobals → KDE → LookAndFeelPackage=Sweet`). O comportamento que fazia a dock desaparecer era `kremarc → General → VisibilityMode=2` (**Dodge windows**), e não a ocultação do painel superior do Plasma.
+
+**Ajustes realizados apenas no Sweet:**
+
+- **Krema inferior e centralizada**, com os aplicativos existentes preservados (`Edge=1`). O layout centralizado é nativo do Krema.
+- **`VisibilityMode=0`**, que significa **Always visible** segundo o `krema.kcfg` do projeto oficial. O modo anterior `2` significa **Dodge windows**.
+- **`ReserveScreenSpace=true`** salvo na configuração. **Atenção:** a funcionalidade de reserva de espaço aparece como *trabalho ainda não lançado* no README do Krema; não há garantia de que **Krema 0.13.0** respeite essa preferência quando uma janela maximizada encostar na dock.
+- **Painel Plasma superior mantido**, com 36 px, visibilidade permanente, sem alterar os widgets. Não deslocar esse painel não compromete a centralização da Krema.
+- O perfil anterior **`hybrid-premium`** foi preservado com **Kubuntu Dark + `VisibilityMode=2`**.
+
+**Como preparar isso manualmente em outra instalação (após instalar Sweet e Krema):**
+
+1. Faça login no Plasma 6 com **Wayland**, abra Configurações do Sistema → **Cores e temas → Tema global** e aplique o Sweet de preferência **sem importar o layout de painéis**. Se precisar, instale o tema Sweet adequado para Plasma 6 em *Obter novos temas globais*.
+2. Na **Krema**, abra **Configurações → Comportamento / Visibilidade**, escolha **Sempre visível / Always visible** e mantenha a dock na **borda inferior**. Ela já usa centralização por padrão; deixe o alinhamento e a ordem dos apps como preferir.
+3. Confira via Konsole (sem `sudo`):
+
+```bash
+kreadconfig6 --file kdeglobals --group KDE --key LookAndFeelPackage
+kreadconfig6 --file kremarc --group General --key VisibilityMode
+kreadconfig6 --file kremarc --group General --key Edge
+```
+
+O resultado esperado é `Sweet`, `0` e `1`, respectivamente. Se a interface do Krema não aplicar a opção, ajuste a preferência **com o Krema fechado**, depois abra-o novamente (não é necessário reiniciar toda a sessão):
+
+```bash
+pkill -x -u "$(id -u)" krema || true
+kwriteconfig6 --file kremarc --group General --key VisibilityMode --type int 0
+kwriteconfig6 --file kremarc --group General --key Edge --type int 1
+nohup krema >/dev/null 2>&1 &
+```
+
+4. Depois de confirmar visualmente a aparência, registre um **perfil nomeado independente**, mantendo o Hybrid Premium:
+
+```bash
+cd ~/configs-linux
+bash scripts/perfis-kde.sh salvar sweet --recursos --dock on
+bash scripts/perfis-kde.sh detalhes sweet
+```
+
+Se o perfil Sweet já existir, **não use `salvar` novamente**; execute `atualizar sweet --recursos --dock on` para arquivar a versão anterior.
+
+5. Para aplicar ou voltar aos estilos quando quiser:
+
+```bash
+bash scripts/perfis-kde.sh listar
+bash scripts/perfis-kde.sh aplicar sweet --dry-run
+bash scripts/perfis-kde.sh aplicar sweet
+bash scripts/perfis-kde.sh aplicar hybrid-premium
+```
+
+O gerenciador **agora reinicia Krema automaticamente ao aplicar um perfil com `dock=on`**, para carregar o arquivo `kremarc` correspondente, inclusive ao alternar de um dock ligado para outro. Não sobrescreva os arquivos de backup em `~/.local/share/linux-hybrid/profiles/`. Uma troca completa de tema pode exigir logout/login para efeitos do KWin.
+
+**Resultado na VM:** os perfis `hybrid-premium` e `sweet` coexistem. O Sweet foi salvo com os recursos locais (~203 MB) e reaplicado em sessão real; o Plasma continuou ativo e o processo Krema foi reiniciado, mantendo `VisibilityMode=0`. Os backups locais não foram publicados no GitHub. A combinação do modo "Always visible" com janelas maximizadas precisa de inspeção visual para confirmar se a versão instalada da Krema evita sobreposição.
+
 ### Passo 5 — Listar e alternar os perfis
 
 ```bash
