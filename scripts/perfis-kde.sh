@@ -84,6 +84,18 @@ capture() {
       cp -p -- "$CONFIG_DIR/$rel" "$dir/config/$rel" || return 1
     fi
   done
+  # O tema global pode definir os icones implicitamente (KConfig defaults),
+  # mesmo sem [Icons] Theme em ~/.config/kdeglobals. Registra o tema efetivo
+  # DENTRO do snapshot para restauracao fiel em outra instalacao.
+  if command -v kreadconfig6 >/dev/null 2>&1 &&
+     command -v kwriteconfig6 >/dev/null 2>&1; then
+    local effective_icons
+    effective_icons="$(kreadconfig6 --file kdeglobals --group Icons --key Theme 2>/dev/null || true)"
+    if [[ -n "$effective_icons" && -f "$dir/config/kdeglobals" ]]; then
+      kwriteconfig6 --file "$dir/config/kdeglobals" --group Icons --key Theme "$effective_icons" ||
+        return 1
+    fi
+  fi
   if [[ "$assets" == 1 ]]; then
     for rel in "${RESOURCES[@]}"; do
       if [[ -d "$DATA_DIR/$rel" && ! -L "$DATA_DIR/$rel" ]]; then
