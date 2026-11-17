@@ -27,6 +27,7 @@ Uso:
   bash scripts/perfis-kde.sh status
   bash scripts/perfis-kde.sh detalhes NOME
   bash scripts/perfis-kde.sh aplicar NOME [--dry-run]
+  bash scripts/perfis-kde.sh restaurar-ultimo
   bash scripts/perfis-kde.sh importar-legado original|personalizada
 
 Nomes: letras minusculas, numeros, _ e -; ate 40 caracteres.
@@ -215,9 +216,15 @@ dock_switch() {
   esac
 }
 apply_profile() {
-  local name="$1" dry="$2" dir dock origin backup
+  local name="$1" dry="$2" custom_dir="${3:-}" dir dock origin backup
   check_user; check_name "$name"
-  dir="$(profile_dir "$name")"
+  if [[ -n "$custom_dir" ]]; then
+    [[ -d "$custom_dir" && ! -L "$custom_dir" && -f "$custom_dir/.snapshot" ]] ||
+      die "Backup de recuperacao invalido."
+    dir="$custom_dir"
+  else
+    dir="$(profile_dir "$name")"
+  fi
   dock="$(read_metadata "$dir/info" dock)"
   case "$dock" in on|off|keep) ;; *) die "Snapshot com modo de dock invalido."; esac
   origin="$(read_metadata "$dir/info" user_home)"
@@ -254,6 +261,17 @@ apply_profile() {
   dock_switch "$dock"
   printf '%s\n' "$name" > "$ACTIVE"
   msg "Perfil '$name' aplicado. Saia e entre na sessao caso temas/efeitos nao atualizem."
+}
+restore_latest() {
+  local folder last=""
+  [[ -d "$HISTORY" ]] || die "Nenhum backup de seguranca existe."
+  for folder in "$HISTORY"/antes-*; do
+    [[ -d "$folder" && ! -L "$folder" && -f "$folder/.snapshot" ]] || continue
+    if [[ -z "$last" || "$folder" -nt "$last" ]]; then last="$folder"; fi
+  done
+  [[ -n "$last" ]] || die "Nenhum backup automatico encontrado."
+  msg "Restaurando configuracoes de: $last"
+  apply_profile recuperado 0 "$last"
 }
 import_legacy() {
   local name="$1" source_dir dst tmp rel dock
@@ -316,6 +334,9 @@ case "${1:---help}" in
     [[ "$#" == 2 || ( "$#" == 3 && "$3" == --dry-run ) ]] ||
       die "Uso: aplicar NOME [--dry-run]"
     apply_profile "$2" "$([[ "${3:-}" == --dry-run ]] && echo 1 || echo 0)" ;;
+  restaurar-ultimo)
+    [[ "$#" == 1 ]] || die "Uso: restaurar-ultimo"
+    restore_latest ;;
   importar-legado)
     [[ "$#" == 2 ]] || die "Uso: importar-legado original|personalizada"
     import_legacy "$2" ;;
