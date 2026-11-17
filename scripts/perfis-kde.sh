@@ -33,7 +33,7 @@ Uso:
   bash scripts/perfis-kde.sh restaurar-versao NOME ID_VERSAO
   bash scripts/perfis-kde.sh comparar NOME
   bash scripts/perfis-kde.sh listar|status|detalhes NOME
-  bash scripts/perfis-kde.sh aplicar NOME [--dry-run]
+  bash scripts/perfis-kde.sh aplicar NOME [--dock on|off|keep] [--dry-run]
   bash scripts/perfis-kde.sh restaurar-ultimo
   bash scripts/perfis-kde.sh importar-legado original|personalizada
 
@@ -424,7 +424,7 @@ dock_switch() {
   esac
 }
 apply_profile() {
-  local name="$1" dry="$2" custom_dir="${3:-}" dir dock origin backup
+  local name="$1" dry="$2" custom_dir="${3:-}" override="${4:-}" dir dock origin backup
   check_user; check_name "$name"
   if [[ -n "$custom_dir" ]]; then
     [[ -d "$custom_dir" && ! -L "$custom_dir" && -f "$custom_dir/.snapshot" ]] ||
@@ -435,6 +435,13 @@ apply_profile() {
   fi
   dock="$(read_metadata "$dir/info" dock)"
   case "$dock" in on|off|keep) ;; *) die "Snapshot com modo de dock invalido."; esac
+  if [[ -n "$override" ]]; then
+    case "$override" in on|off|keep) dock="$override" ;; *) die "Override de dock invalido: $override";; esac
+  fi
+  if [[ "$dock" == "off" ]] && [[ -f "$dir/config/$PLASMA" ]] &&
+     ! grep -Eq "plugin=org.kde.plasma.(icontasks|taskmanager)" "$dir/config/$PLASMA"; then
+    die "Perfil sem gerenciador de tarefas. Nao e seguro desativar a dock: restaure primeiro um painel com icontasks ou mantenha --dock on."
+  fi
   origin="$(read_metadata "$dir/info" user_home)"
   msg "Aplicar '$name': KDE Plasma, cores, efeitos e dock=$dock"
   [[ -z "$origin" || "$origin" == "$HOME" ]] ||
@@ -569,9 +576,20 @@ case "${1:---help}" in
     [[ "$#" == 2 ]] || die "Uso: comparar NOME"
     compare_profile "$2" ;;
   aplicar)
-    [[ "$#" == 2 || ( "$#" == 3 && "$3" == --dry-run ) ]] ||
-      die "Uso: aplicar NOME [--dry-run]"
-    apply_profile "$2" "$([[ "${3:-}" == --dry-run ]] && echo 1 || echo 0)" ;;
+    (( $# >= 2 )) || die "Uso: aplicar NOME [--dock on|off|keep] [--dry-run]"
+    profile_name="$2"; shift 2
+    apply_dry=0; apply_dock=""
+    while (($#)); do
+      case "$1" in
+        --dry-run) apply_dry=1; shift ;;
+        --dock)
+          (( $# >= 2 )) || die "--dock exige on|off|keep."
+          apply_dock="$2"; shift 2 ;;
+        *) die "Opcao inesperada: $1. Uso: aplicar NOME [--dock on|off|keep] [--dry-run]" ;;
+      esac
+    done
+    case "$apply_dock" in ""|on|off|keep) ;; *) die "--dock exige on|off|keep." ;; esac
+    apply_profile "$profile_name" "$apply_dry" "" "$apply_dock" ;;
   restaurar-ultimo)
     [[ "$#" == 1 ]] || die "Uso: restaurar-ultimo"
     restore_latest ;;
