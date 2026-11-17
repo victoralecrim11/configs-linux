@@ -130,6 +130,14 @@ bash "$SCRIPT" editar mais-novo --dock off >/dev/null
 grep -q '^layout=novo-visual$' "$STATE/mais-novo/config/plasma-org.kde.plasma.desktop-appletsrc"
 output="$(bash "$SCRIPT" historico mais-novo)"
 grep -q 'mais-novo--anterior-' <<< "$output"
+version="$(printf '%s\n' "$output" | sed -n '1p')"
+bash "$SCRIPT" restaurar-versao mais-novo "$version" >/dev/null
+grep -q '^layout=antes-da-falha$' "$STATE/mais-novo/config/plasma-org.kde.plasma.desktop-appletsrc"
+# Restaurar uma versao nao deve alterar arquivos do KDE em execucao.
+grep -q '^layout=novo-visual$' "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+if bash "$SCRIPT" restaurar-versao mais-novo '../etc/passwd' >/dev/null 2>&1; then
+  echo '[ERRO] Identificador de versao inseguro aceito.' >&2; exit 1
+fi
 bash "$SCRIPT" excluir mais-novo --yes >/dev/null
 [[ ! -e "$STATE/.ativo" ]]
 grep -q '^layout=novo-visual$' "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
