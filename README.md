@@ -119,11 +119,11 @@ As pastas pessoais são:
 └── .lixeira/                # Perfis excluidos, recuperaveis
 ```
 
-### Vídeo de referência — visual Sweet (não confundir com Hybrid Premium)
+### Vídeo demonstrativo — personalização do KDE com tema Sweet
 
 🎥 **[Make your KDE Sweet | Customizing KDE Plasma — NH Soft (23/04/2025)](https://www.youtube.com/watch?v=PyyxQYkloLo)**
 
-Este é o vídeo **Sweet** que usamos para discutir a personalização. O autor demonstra o processo no **KDE Neon / Plasma 6.3.4**, incluindo estas etapas:
+O vídeo demonstra o processo de personalização do **KDE Neon com Plasma 6.3.4**, utilizando o tema **Sweet**. As principais etapas são:
 
 | Tempo no vídeo | Assunto |
 | --- | --- |
@@ -135,7 +135,7 @@ Este é o vídeo **Sweet** que usamos para discutir a personalização. O autor 
 | [09:38](https://www.youtube.com/watch?v=PyyxQYkloLo&t=578s) | Animações |
 | [10:58](https://www.youtube.com/watch?v=PyyxQYkloLo&t=658s) | Prévia do Alt+Tab |
 
-**Não confundir:** o vídeo é uma referência para o perfil **`sweet`**. O tema **Windows Eleven Dark** e os ícones **Windows-Eleven** do `hybrid-premium` atual são personalizações aplicadas posteriormente no seu ambiente; não são atribuídas ao vídeo. Krema é uma dock separada que pode ser mantida ou desligada em qualquer perfil.
+O tutorial serve como referência visual para o perfil **`sweet`**. O perfil **`hybrid-premium`** utiliza uma configuração independente, com tema Windows Eleven Dark e ícones Windows-Eleven. A dock Krema pode ser ativada ou desativada em cada perfil.
 
 ---
 
