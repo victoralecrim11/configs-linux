@@ -30,6 +30,7 @@ Uso:
   bash scripts/perfis-kde.sh lixeira
   bash scripts/perfis-kde.sh restaurar-excluido NOME
   bash scripts/perfis-kde.sh historico NOME
+  bash scripts/perfis-kde.sh restaurar-versao NOME ID_VERSAO
   bash scripts/perfis-kde.sh comparar NOME
   bash scripts/perfis-kde.sh listar|status|detalhes NOME
   bash scripts/perfis-kde.sh aplicar NOME [--dry-run]
@@ -232,6 +233,37 @@ show_history() {
   done
   (( found )) || msg "Nenhuma versao arquivada de '$name'."
 }
+restore_version() {
+  local name="$1" version="$2" old temp current archived
+  check_user; check_name "$name"
+  # Aceita apenas um identificador de versao devolvido por "historico".
+  [[ "$version" =~ ^[a-zA-Z0-9_-]+$ ]] ||
+    die "Identificador invalido. Use historico NOME."
+  if [[ "$version" != "$name--anterior-"* && ! "$version" =~ ^$name-[0-9]{8}-[0-9]{6}- ]]; then
+    die "A versao nao pertence ao perfil '$name'."
+  fi
+  old="$HISTORY/$version"
+  [[ -d "$old" && ! -L "$old" && -f "$old/.snapshot" && -f "$old/tracked.txt" ]] ||
+    die "Versao historica nao encontrada: $version"
+  current="$(profile_dir "$name")"
+  prepare
+  temp="$(mktemp -d "$ROOT/.restaurar-versao-XXXXXXXX")"
+  if ! cp -a -- "$old/." "$temp/"; then
+    rm -rf -- "$temp"; die "Falha ao preparar a versao historica."
+  fi
+  archived="$(unique_archive "$HISTORY" "$name" anterior)"
+  mv -- "$current" "$archived" ||
+    { rm -rf -- "$temp"; die "Nao foi possivel arquivar a versao atual."; }
+  if ! mv -- "$temp" "$current"; then
+    mv -- "$archived" "$current" || true
+    rm -rf -- "$temp"
+    die "Falha na restauracao. Tentativa de reversao concluida."
+  fi
+  msg "Snapshot do perfil '$name' restaurado para $version."
+  msg "Versao substituida preservada em: $archived"
+  msg "O KDE em execucao NAO foi modificado. Para ativar: aplicar $name"
+}
+
 compare_profile() {
   local name="$1" dir file key group actual stored value state
   check_name "$name"; dir="$(profile_dir "$name")"
@@ -511,6 +543,9 @@ case "${1:---help}" in
   historico)
     [[ "$#" == 2 ]] || die "Uso: historico NOME"
     show_history "$2" ;;
+  restaurar-versao)
+    [[ "$#" == 3 ]] || die "Uso: restaurar-versao NOME ID_VERSAO"
+    restore_version "$2" "$3" ;;
   comparar)
     [[ "$#" == 2 ]] || die "Uso: comparar NOME"
     compare_profile "$2" ;;
