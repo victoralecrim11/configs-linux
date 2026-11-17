@@ -11,3 +11,5 @@ jobs:
         run: bash tests/smoke.sh
       - name: Validar perfis KDE (ambiente isolado)
         run: bash tests/perfis-kde-smoke.sh
+      - name: Validar Sweet e dock sem sobreposicao (ambiente isolado)
+        run: bash tests/sweet-barra-smoke.sh
