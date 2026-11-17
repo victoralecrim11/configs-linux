@@ -2,6 +2,160 @@
 
 Scripts de personalização do **KDE Plasma 6** com perfis de instalação para **Kubuntu 26.04 LTS e Debian 13**, visual inspirado em Windows 11/Garuda/macOS e perfis visuais nomeados (v2.1). O projeto começou na VM `kubuntu-vm`.
 
+## Comece aqui: gerenciar meus perfis KDE
+
+O projeto tem **dois tipos diferentes de perfil**:
+
+| Tipo | Exemplo | Serve para |
+| --- | --- | --- |
+| **Instalação** | `premium`, `dev`, `full` | Instalar programas e preparar a distribuição com `install.sh`. |
+| **Aparência** | `hybrid-premium`, `sweet`, `kde-padrao-centralizado` | Salvar/trocar tema, ícones, barra, widgets e Krema com `scripts/perfis-kde.sh`. |
+
+**Uma instalação Premium não é um perfil visual salvo.** Alterar a aparência não reinstala programas; instalar ferramentas Developer não muda necessariamente o visual.
+
+### Estado atual verificado — VM Kubuntu, 17/11/2026
+
+O usuário personalizou o `hybrid-premium`. O ambiente real foi inspecionado na VM **Kubuntu 26.04.1 LTS, KDE Plasma 6.6.6, Wayland**:
+
+| Elemento | Ativo agora | Hybrid Premium antigo |
+| --- | --- | --- |
+| Tema global | **Windows Eleven Dark** (`windows.eleven.Dark.P6`) | `org.kubuntudark.desktop` |
+| Ícones | **Windows-Eleven** | Papirus-Dark |
+| Esquema de cores | **AbsoluteDark** | Kubuntu Dark / esquema anterior |
+| Cor de destaque | `139,92,246` (roxo) | Roxo |
+| Painel | Superior, 44 px | Layout anterior |
+| Dock | Krema em execução (`dock=on`) | Krema ativa |
+
+**O snapshot `hybrid-premium` foi atualizado para o novo visual.** A versão antiga foi preservada em `~/.local/share/linux-hybrid/profiles/.historico/`; portanto, é possível recuperar o visual anterior. A atualização foi feita **sem reiniciar o desktop**. Tema, ícones efetivos, cores e painel foram comparados com o snapshot após a gravação. O gerenciador agora registra também o **tema de ícones e o esquema de cores efetivos** em `kdeglobals`, mesmo quando são herdados do tema global.
+
+**Importante:** o snapshot real reside **somente na VM**, não no GitHub. Ao clonar o código em outra máquina, o usuário precisa criar ou importar os próprios snapshots e instalar os temas/widgets necessários.
+
+### Instalar ou atualizar o repositório
+
+Se ainda não clonou:
+
+```bash
+sudo apt update && sudo apt install -y git
+cd "$HOME"
+git clone https://github.com/victoralecrim11/configs-linux.git
+cd configs-linux
+```
+
+Se o repositório já existe, use **apenas**:
+
+```bash
+cd ~/configs-linux
+git pull --ff-only
+```
+
+No Konsole do KDE Plasma, execute os exemplos abaixo **como usuário normal, sem `sudo bash`**.
+
+### Criar um novo perfil visual
+
+1. Em **Configurações do Sistema → Cores e temas**, escolha tema, ícones, esquema de cores, fonte e efeitos.
+2. Personalize painel, widgets e dock conforme desejar.
+3. Execute `criar` para capturar o ambiente atual:
+
+```bash
+bash scripts/perfis-kde.sh criar meu-tema --recursos --dock off
+```
+
+Use `--dock on` para perfil que deve iniciar o **Krema**, `--dock off` para perfil **sem Krema** e `--dock keep` para deixar o estado da dock como estiver ao aplicar. `--recursos` também copia temas, ícones, wallpapers e fontes **locais do usuário**; pode consumir centenas de MB. Não inclui pacotes de sistema nem tudo que está fora de `~/.local/share/`.
+
+### Editar um perfil já criado
+
+`editar` **não abre um editor de código**: ele salva uma **nova versão da aparência atualmente aberta no KDE**, substituindo o snapshot nomeado e arquivando a versão antiga.
+
+```bash
+# Ver diferencas entre o ambiente atual e a versao salva
+bash scripts/perfis-kde.sh comparar hybrid-premium
+
+# Apos mudar tema, icones ou painel no KDE, salvar a nova versao
+bash scripts/perfis-kde.sh editar hybrid-premium --recursos --dock on
+
+# Listar as versoes anteriores (sem alterar o desktop)
+bash scripts/perfis-kde.sh historico hybrid-premium
+```
+
+Se quiser voltar **ao snapshot de uma versão anterior**, copie exatamente o identificador exibido por `historico`:
+
+```bash
+bash scripts/perfis-kde.sh restaurar-versao hybrid-premium ID_DA_VERSAO
+bash scripts/perfis-kde.sh aplicar hybrid-premium
+```
+
+`restaurar-versao` só substitui o **snapshot salvo**, guardando outra cópia no histórico; **não altera a interface em execução** até que `aplicar` seja executado. Para restaurar apenas o estado anterior à última troca de aparência, use `restaurar-ultimo`.
+
+### Duplicar, renomear e excluir sem perder dados
+
+```bash
+# Duplicar o perfil em outro nome (sem alterar a interface)
+bash scripts/perfis-kde.sh duplicar hybrid-premium windows-eleven-teste
+
+# Renomear a copia
+bash scripts/perfis-kde.sh renomear windows-eleven-teste windows-eleven-v2
+
+# Ver detalhes e a lista de perfis
+bash scripts/perfis-kde.sh detalhes windows-eleven-v2
+bash scripts/perfis-kde.sh listar
+
+# Excluir: exige confirmacao e move para lixeira local, nao apaga definitivamente
+bash scripts/perfis-kde.sh excluir windows-eleven-v2
+
+# Inspecionar e recuperar da lixeira
+bash scripts/perfis-kde.sh lixeira
+bash scripts/perfis-kde.sh restaurar-excluido windows-eleven-v2
+```
+
+Para automações não interativas, `excluir NOME --yes` permite pular a confirmação, mas **exclui somente o snapshot nomeado** (move para lixeira). O visual atualmente aplicado e os aplicativos instalados não são modificados. Excluir o perfil registrado como ativo limpa apenas o indicador de perfil, não muda a sessão.
+
+**Segurança:** não use nomes com barras ou espaços; use `a-z`, `0-9`, `-` e `_` (até 40 caracteres). `criar` não sobrescreve nomes existentes; `editar` preserva a versão anterior; `duplicar` e `renomear` recusam nomes já usados. Os snapshots da lixeira podem ser recuperados com `restaurar-excluido`.
+
+### Consultar, alternar e fazer backup de segurança
+
+```bash
+bash scripts/perfis-kde.sh status
+bash scripts/perfis-kde.sh listar
+bash scripts/perfis-kde.sh comparar hybrid-premium
+bash scripts/perfis-kde.sh aplicar hybrid-premium --dry-run
+bash scripts/perfis-kde.sh aplicar hybrid-premium
+bash scripts/perfis-kde.sh aplicar sweet
+bash scripts/perfis-kde.sh aplicar kde-padrao-centralizado
+bash scripts/perfis-kde.sh restaurar-ultimo
+```
+
+A aplicação de um perfil faz backup automático, pode reiniciar **Plasma Shell e Krema**, e pode exigir logout/login para atualizar efeitos do KWin. `--dry-run` não modifica arquivos. Use `bash tests/perfis-kde-smoke.sh` para validar o gerenciador **sem alterar o KDE real**.
+
+As pastas pessoais são:
+```text
+~/.local/share/linux-hybrid/profiles/
+├── hybrid-premium/          # Snapshot atual salvo: Windows Eleven
+├── sweet/                   # Perfil Sweet antigo
+├── kde-padrao-centralizado/ # Barra KDE centralizada sem Krema
+├── .historico/              # Versoes antigas e backups
+└── .lixeira/                # Perfis excluidos, recuperaveis
+```
+
+### Vídeo de referência — visual Sweet (não confundir com Hybrid Premium)
+
+🎥 **[Make your KDE Sweet | Customizing KDE Plasma — NH Soft (23/04/2025)](https://www.youtube.com/watch?v=PyyxQYkloLo)**
+
+Este é o vídeo **Sweet** que usamos para discutir a personalização. O autor demonstra o processo no **KDE Neon / Plasma 6.3.4**, incluindo estas etapas:
+
+| Tempo no vídeo | Assunto |
+| --- | --- |
+| [00:51](https://www.youtube.com/watch?v=PyyxQYkloLo&t=51s) | Wallpaper e tela de bloqueio |
+| [01:37](https://www.youtube.com/watch?v=PyyxQYkloLo&t=97s) | Fontes personalizadas |
+| [03:34](https://www.youtube.com/watch?v=PyyxQYkloLo&t=214s) | Tema, ícones e decoração de janelas |
+| [06:55](https://www.youtube.com/watch?v=PyyxQYkloLo&t=415s) | Transparência e desfoque |
+| [08:59](https://www.youtube.com/watch?v=PyyxQYkloLo&t=539s) | Ícone do menu de aplicativos |
+| [09:38](https://www.youtube.com/watch?v=PyyxQYkloLo&t=578s) | Animações |
+| [10:58](https://www.youtube.com/watch?v=PyyxQYkloLo&t=658s) | Prévia do Alt+Tab |
+
+**Não confundir:** o vídeo é uma referência para o perfil **`sweet`**. O tema **Windows Eleven Dark** e os ícones **Windows-Eleven** do `hybrid-premium` atual são personalizações aplicadas posteriormente no seu ambiente; não são atribuídas ao vídeo. Krema é uma dock separada que pode ser mantida ou desligada em qualquer perfil.
+
+---
+
 ## Comece aqui: instalador universal v2
 
 O instalador `install.sh` **detecta automaticamente a distribuição** usando `/etc/os-release`. Na versão 2, a instalação é habilitada apenas no **Kubuntu/Ubuntu 26.04** e no **Debian 13 com KDE Plasma 6**. Fedora, CachyOS, Arch e openSUSE podem ser identificados, mas **não recebem instalações automáticas ainda**.
