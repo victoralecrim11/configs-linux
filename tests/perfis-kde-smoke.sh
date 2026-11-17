@@ -31,6 +31,20 @@ printf '#!/bin/sh\nexit 1\n' > "$TMP/mock/pgrep"
 printf '#!/bin/sh\nexit 0\n' > "$TMP/mock/pkill"
 # Jamais execute a Krema real em um teste isolado: mocka o binario tambem.
 printf '#!/bin/sh\nexit 0\n' > "$TMP/mock/krema"
+# APIs KDE e KConfig falsas: testes nao acessam o painel real nem alteram ~/.config real.
+cat > "$TMP/mock/busctl" <<'MOCKBUS'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >> "$HOME/mock-busctl.log"
+if [[ "$*" == *"target.location='top'"* ]]; then
+  printf 's "KDE_DOCK_PANEL_OK:2:top"\n'
+else
+  printf 's "KDE_DOCK_PANEL_OK:2:bottom"\n'
+fi
+MOCKBUS
+cat > "$TMP/mock/kwriteconfig6" <<'MOCKWRITE'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >> "$HOME/mock-kwrite.log"
+MOCKWRITE
 chmod +x "$TMP/mock/"*
 
 CONFIG="$XDG_CONFIG_HOME"
@@ -159,6 +173,19 @@ if bash "$SCRIPT" aplicar painel-sem-tarefas --dock off --dry-run > /dev/null 2>
 fi
 output="$(bash "$SCRIPT" aplicar painel-sem-tarefas --dock on --dry-run)"
 grep -q 'dock=on' <<< "$output"
+
+# Toggle de dock respeita painel top/bottom e Krema auto-hide no mock.
+bash "$SCRIPT" aplicar sweet --dock on >/dev/null
+grep -q "target.location='top'" "$HOME/mock-busctl.log"
+grep -q 'VisibilityMode --type int 1' "$HOME/mock-kwrite.log"
+grep -q 'RevealTriggerLocation --type int 0' "$HOME/mock-kwrite.log"
+grep -q 'HideDelay --type int 700' "$HOME/mock-kwrite.log"
+bash "$SCRIPT" aplicar original --dock off >/dev/null
+grep -q "target.location='bottom'" "$HOME/mock-busctl.log"
+bash "$SCRIPT" dock on >/dev/null
+bash "$SCRIPT" dock off >/dev/null
+[[ -f "$STATE/.historico" ]] || [[ -d "$STATE/.historico" ]]
+grep -q '^Hidden=true$' "$CONFIG/autostart/com.bhyoo.krema.autostart.desktop"
 
 printf 'conteudo-externo\n' > "$TMP/externo"
 rm -f -- "$CONFIG/kwinrc"
