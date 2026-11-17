@@ -67,14 +67,14 @@ capture() {
   for rel in "${FILES[@]}"; do
     if [[ -f "$CONFIG_DIR/$rel" && ! -L "$CONFIG_DIR/$rel" ]]; then
       mkdir -p -- "$(dirname -- "$dir/config/$rel")"
-      cp -p -- "$CONFIG_DIR/$rel" "$dir/config/$rel"
+      cp -p -- "$CONFIG_DIR/$rel" "$dir/config/$rel" || return 1
     fi
   done
   if [[ "$assets" == 1 ]]; then
     for rel in "${RESOURCES[@]}"; do
       if [[ -d "$DATA_DIR/$rel" && ! -L "$DATA_DIR/$rel" ]]; then
         mkdir -p -- "$(dirname -- "$dir/resources/$rel")"
-        cp -a -- "$DATA_DIR/$rel" "$dir/resources/$rel"
+        cp -a -- "$DATA_DIR/$rel" "$dir/resources/$rel" || return 1
       fi
     done
   fi
@@ -292,7 +292,7 @@ case "${1:---help}" in
     details "$2" ;;
   salvar|atualizar)
     (( $# >= 2 )) || die "Informe o nome do perfil."
-    name="$2"; assets=0; dock=auto; shift 2
+    operation="$1"; name="$2"; assets=0; dock=auto; shift 2
     while (($#)); do
       case "$1" in
         --recursos) assets=1; shift ;;
@@ -306,9 +306,11 @@ case "${1:---help}" in
     if [[ "$assets" == 1 ]]; then
       msg "AVISO: --recursos copia temas, icones e wallpapers de usuario. Pode consumir bastante espaco."
     fi
-    if [[ "${1:-}" == "" ]]; then :; fi
-    # Determina modo pela operacao original sem reusar argumentos deslocados.
-    # A variavel OPERACAO e definida antes do parse.
+    if [[ "$operation" == atualizar ]]; then
+      save_profile "$name" 1 "$assets" "$dock"
+    else
+      save_profile "$name" 0 "$assets" "$dock"
+    fi
     ;;
   aplicar)
     [[ "$#" == 2 || ( "$#" == 3 && "$3" == --dry-run ) ]] ||
