@@ -34,6 +34,7 @@ Uso:
   bash scripts/perfis-kde.sh comparar NOME
   bash scripts/perfis-kde.sh listar|status|detalhes NOME
   bash scripts/perfis-kde.sh aplicar NOME [--dock on|off|keep] [--dry-run]
+  bash scripts/perfis-kde.sh dock on|off
   bash scripts/perfis-kde.sh restaurar-ultimo
   bash scripts/perfis-kde.sh importar-legado original|personalizada
 
@@ -365,22 +366,77 @@ restore_config() {
     fi
   done
 }
+# Alterna o painel principal ao vivo sem remover widgets.
+panel_for_dock() {
+  local mode="$1" edge result js
+  case "$mode" in on) edge=top ;; off) edge=bottom ;; keep) return 0 ;;
+    *) die "Modo de dock invalido: $mode" ;; esac
+  command -v busctl >/dev/null 2>&1 || die "busctl nao encontrado."
+  js="(function(){
+    var target=null, fallback=null;
+    for(var i=0;i<panelIds.length;i++){
+      var p=panelById(panelIds[i]);if(!p)continue;
+      var types=p.widgetIds.map(function(id){return p.widgetById(id).type;});
+      if(types.indexOf('org.kde.plasma.icontasks')>=0 ||
+         types.indexOf('org.kde.plasma.taskmanager')>=0){target=p;break;}
+      if(!fallback&&types.indexOf('org.kde.plasma.systemtray')>=0)fallback=p;
+    }
+    if(!target)target=fallback;
+    if(!target)throw Error('Nenhum painel KDE principal encontrado');
+    if('$mode'==='off'&&!target.widgetIds.some(function(id){
+      var type=target.widgetById(id).type;
+      return type==='org.kde.plasma.icontasks'||type==='org.kde.plasma.taskmanager';
+    }))throw Error('Nao desligar dock sem gerenciador de tarefas');
+    target.location='$edge';
+    target.hiding='none';
+    print('KDE_DOCK_PANEL_OK:'+target.id+':'+target.location);
+  })();"
+  result="$(busctl --user call org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell evaluateScript s "$js")" ||
+    die "Falha ao mover painel KDE para $edge."
+  [[ "$result" == *"KDE_DOCK_PANEL_OK:"* ]] ||
+    die "Posicao do painel nao confirmada: $result"
+  msg "Painel KDE: $edge."
+}
+# A configuracao deve ser salva depois que o processo Krema terminar.
+krema_autohide() {
+  local kv key value
+  command -v kwriteconfig6 >/dev/null 2>&1 ||
+    die "kwriteconfig6 nao encontrado para configurar Krema."
+  for kv in Edge=1 VisibilityMode=1 RevealTriggerLocation=0 Floating=true \
+            FloatingMarginReference=0 FloatingMargin=8 ShowDelay=100 \
+            HideDelay=700 ReserveScreenSpace=false; do
+    key="${kv%%=*}"
+    value="${kv#*=}"
+    case "$value" in true|false)
+      kwriteconfig6 --file kremarc --group General --key "$key" --type bool "$value" ||
+        die "Falha ao salvar $key=$value" ;;
+      *)
+      kwriteconfig6 --file kremarc --group General --key "$key" --type int "$value" ||
+        die "Falha ao salvar $key=$value" ;;
+    esac
+  done
+}
 dock_switch() {
   local mode="$1" source_dir="${2:-}" file="$CONFIG_DIR/$AUTOSTART"
   case "$mode" in
     off)
-      if [[ -f "$file" ]] && ! grep -q '^X-Linux-Hybrid-Managed=true$' "$file" &&
-        ! grep -q '^X-Kubuntu-Hybrid-Managed=true$' "$file"; then
+      if [[ -f "$file" ]] &&
+         ! grep -q '^X-Linux-Hybrid-Managed=true$' "$file" &&
+         ! grep -q '^X-Kubuntu-Hybrid-Managed=true$' "$file"; then
         cp -p -- "$file" "$ROOT/.krema-autostart-user.desktop"
       fi
       mkdir -p -- "$(dirname -- "$file")"
       printf '[Desktop Entry]\nType=Application\nName=Krema\nHidden=true\nX-Linux-Hybrid-Managed=true\n' > "$file"
       pkill -x -u "$(id -u)" krema 2>/dev/null || true
+      msg "Krema desligada e autostart desativado."
       ;;
     on)
+      [[ "${XDG_SESSION_TYPE:-}" == wayland ]] ||
+        die "Este modo da Krema requer Wayland."
+      command -v krema >/dev/null 2>&1 || die "Krema nao instalada."
       if [[ -f "$file" ]] &&
-        { grep -q '^X-Linux-Hybrid-Managed=true$' "$file" ||
-          grep -q '^X-Kubuntu-Hybrid-Managed=true$' "$file"; }; then
+         { grep -q '^X-Linux-Hybrid-Managed=true$' "$file" ||
+           grep -q '^X-Kubuntu-Hybrid-Managed=true$' "$file"; }; then
         if [[ -f "$ROOT/.krema-autostart-user.desktop" ]]; then
           cp -p -- "$ROOT/.krema-autostart-user.desktop" "$file"
         elif [[ -f "$LEGACY/autostart-anterior.desktop" ]]; then
@@ -389,39 +445,50 @@ dock_switch() {
           rm -f -- "$file"
         fi
       fi
-      if [[ "${XDG_SESSION_TYPE:-}" == wayland ]] && command -v krema >/dev/null 2>&1; then
-        # O Krema pode manter uma copia do KConfig em memoria. Reinicie o processo
-        # em toda troca on->on para nao deixar o modo antigo da dock em uso.
-        if pgrep -x -u "$(id -u)" krema >/dev/null 2>&1; then
-          pkill -x -u "$(id -u)" krema 2>/dev/null || true
-          local tentativa
-          for tentativa in 1 2 3 4 5 6 7 8 9 10; do
-            pgrep -x -u "$(id -u)" krema >/dev/null 2>&1 || break
-            sleep 0.2
-          done
-          if pgrep -x -u "$(id -u)" krema >/dev/null 2>&1; then
-            msg "AVISO: nao foi possivel encerrar Krema; faca logout/login para recarregar o perfil."
-            return 0
-          fi
-          # A instancia anterior pode ter gravado preferencias ao encerrar.
-          # Reaplicar o arquivo do perfil DEPOIS do encerramento.
-          if [[ -n "$source_dir" ]]; then
-            if [[ -f "$source_dir/config/kremarc" && ! -L "$source_dir/config/kremarc" ]]; then
-              cp -p -- "$source_dir/config/kremarc" "$CONFIG_DIR/kremarc" ||
-                die "Falha ao recarregar as preferencias da dock."
-            else
-              rm -f -- "$CONFIG_DIR/kremarc"
-            fi
+      if pgrep -x -u "$(id -u)" krema >/dev/null 2>&1; then
+        pkill -x -u "$(id -u)" krema 2>/dev/null || true
+        local tentativa
+        for tentativa in 1 2 3 4 5 6 7 8 9 10; do
+          pgrep -x -u "$(id -u)" krema >/dev/null 2>&1 || break
+          sleep 0.2
+        done
+        pgrep -x -u "$(id -u)" krema >/dev/null 2>&1 &&
+          die "Krema nao encerrou; nova instancia nao sera iniciada."
+        if [[ -n "$source_dir" ]]; then
+          if [[ -f "$source_dir/config/kremarc" && ! -L "$source_dir/config/kremarc" ]]; then
+            cp -p -- "$source_dir/config/kremarc" "$CONFIG_DIR/kremarc" ||
+              die "Falha ao recuperar configuracao original Krema."
+          else
+            rm -f -- "$CONFIG_DIR/kremarc"
           fi
         fi
-        (nohup krema >/dev/null 2>&1 </dev/null &)
-      else
-        msg "AVISO: Krema nao iniciada (instale Krema e use uma sessao Wayland)."
       fi
+      krema_autohide
+      (nohup krema >/dev/null 2>&1 </dev/null &)
+      msg "Krema: auto-hide na borda inferior; ativacao pelo cursor."
       ;;
     keep) ;;
-    *) die "Modo da dock invalido no snapshot: $mode" ;;
+    *) die "Modo de dock invalido: $mode" ;;
   esac
+}
+# Alterna a dock sem reaplicar arquivos de perfil, salvando backup primeiro.
+dock_current() {
+  local mode="$1" backup
+  check_user; check_kde
+  [[ "$mode" == on || "$mode" == off ]] || die "Uso: dock on|off"
+  if [[ "$mode" == on ]]; then
+    [[ "${XDG_SESSION_TYPE:-}" == wayland ]] || die "Krema exige Wayland."
+    command -v krema >/dev/null 2>&1 || die "Krema nao instalada."
+  fi
+  systemctl --user is-active --quiet plasma-plasmashell.service ||
+    die "Plasma Shell nao esta ativo."
+  prepare
+  backup="$HISTORY/antes-dock-$mode-$(date +%Y%m%d-%H%M%S)-${BASHPID}"
+  capture "$backup" "$(dock_detect)" 0 rollback
+  msg "Backup automatico: $backup"
+  panel_for_dock "$mode"
+  dock_switch "$mode"
+  msg "Modo dock=$mode aplicado sem modificar o perfil salvo."
 }
 apply_profile() {
   local name="$1" dry="$2" custom_dir="${3:-}" override="${4:-}" dir dock origin backup
@@ -479,6 +546,7 @@ apply_profile() {
     systemctl --user start plasma-plasmashell.service || true
     die "Nao foi possivel ativar o perfil; backup: $backup"
   fi
+  panel_for_dock "$dock"
   dock_switch "$dock" "$dir"
   printf '%s\n' "$name" > "$ACTIVE"
   msg "Perfil '$name' aplicado. Saia e entre na sessao caso temas/efeitos nao atualizem."
@@ -591,6 +659,9 @@ case "${1:---help}" in
     done
     case "$apply_dock" in ""|on|off|keep) ;; *) die "--dock exige on|off|keep." ;; esac
     apply_profile "$profile_name" "$apply_dry" "" "$apply_dock" ;;
+  dock)
+    [[ "$#" == 2 ]] || die "Uso: dock on|off"
+    dock_current "$2" ;;
   restaurar-ultimo)
     [[ "$#" == 1 ]] || die "Uso: restaurar-ultimo"
     restore_latest ;;
