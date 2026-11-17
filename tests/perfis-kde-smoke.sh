@@ -91,7 +91,19 @@ printf 'layout=legado\n' > "$XDG_DATA_HOME/kubuntu-hybrid/perfis-alternancia/per
 touch "$XDG_DATA_HOME/kubuntu-hybrid/perfis-alternancia/personalizada/.snapshot"
 bash "$SCRIPT" importar-legado personalizada >/dev/null
 bash "$SCRIPT" detalhes personalizada | grep -q 'kind=legacy'
-echo '[OK] Perfis KDE: salvar, proteger, listar, simular, aplicar, rollback, atualizar, recursos e legado.'
+
+# Nunca seguir ou sobrescrever symlinks de arquivos KDE.
+printf 'conteudo-externo\n' > "$TMP/externo"
+rm -f -- "$CONFIG/kwinrc"
+ln -s "$TMP/externo" "$CONFIG/kwinrc"
+if bash "$SCRIPT" salvar symlink-test >/dev/null 2>&1; then
+  echo 'ERRO: perfil capturou configuracao simbolica sem protecao' >&2; exit 1
+fi
+if bash "$SCRIPT" aplicar original >/dev/null 2>&1; then
+  echo 'ERRO: aplicacao alterou configuracao simbolica' >&2; exit 1
+fi
+grep -q conteudo-externo "$TMP/externo"
+echo '[OK] Perfis KDE: salvar, proteger, listar, simular, aplicar, rollback, atualizar, recursos, legado e symlinks.'
  "$CONFIG/autostart/com.bhyoo.krema.autostart.desktop"
 grep -q 'theme=Sweet' "$CONFIG/kdeglobals"
 grep -q 'layout=sweet' "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
