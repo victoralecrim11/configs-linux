@@ -241,7 +241,7 @@ bash scripts/perfis-kde.sh aplicar hybrid-premium
 
 O gerenciador **agora reinicia Krema automaticamente ao aplicar um perfil com `dock=on`**, para carregar o arquivo `kremarc` correspondente, inclusive ao alternar de um dock ligado para outro. Não sobrescreva os arquivos de backup em `~/.local/share/linux-hybrid/profiles/`. Uma troca completa de tema pode exigir logout/login para efeitos do KWin.
 
-**Resultado na VM:** os perfis `hybrid-premium` e `sweet` coexistem. O Sweet foi salvo com os recursos locais (~203 MB) e reaplicado em sessão real; o Plasma continuou ativo e o processo Krema foi reiniciado, mantendo `VisibilityMode=0`. Os backups locais não foram publicados no GitHub. A combinação do modo "Always visible" com janelas maximizadas precisa de inspeção visual para confirmar se a versão instalada da Krema evita sobreposição.
+**Resultado na VM:** os perfis `hybrid-premium` e `sweet` coexistem. O Sweet foi salvo com os recursos locais (~203 MB) e reaplicado em sessão real; o Plasma continuou ativo e o processo Krema foi reiniciado, mantendo `VisibilityMode=0`. Os backups locais não foram publicados no GitHub. A etapa posterior de correção reposiciona o painel inferior e valida a área de maximização das janelas via KWin.
 
 ### Sweet atualizado — barra de tarefas na posição original (inferior) + dock animada
 
@@ -306,6 +306,47 @@ Se for o **primeiro** Sweet salvo nesse computador, use `salvar sweet --recursos
 **Teste real executado:** após salvar o novo estado, `aplicar sweet` restaurou a barra inferior (36 px, sete widgets), Sweet, Candy Icons, Krema (`VisibilityMode=0` e margem 44 px), com Plasma Shell ativo. A largura do painel retornou ao tamanho da tela após alguns instantes de estabilização. O snapshot continua privado no computador e não foi enviado ao GitHub.
 
 **Nota:** `scripts/perfil-barra-atual-kde.sh aplicar` é um instalador **legado** que configura explicitamente o painel **superior** e a Krema com outro modo de visibilidade. Para restaurar este visual atualizado, utilize **`bash scripts/perfis-kde.sh aplicar sweet`**, não o instalador legado.
+
+### Correção da sobreposição no Sweet: barra inferior + dock animada
+
+**Validado na VM Kubuntu 26.04.1, KDE Plasma 6.6.6, Wayland e Krema 0.13.0 (17/11/2026).**
+
+Na versão anterior do Sweet, o painel principal estava no topo, e a Krema inferior não tinha um painel Plasma adequado na posição tradicional. O novo layout utiliza **o painel nativo já existente** (com seus 7 widgets) no **rodapé, sempre visível**, e a **Krema centralizada na parte inferior** com modo **Always visible**. O instalador **não cria uma segunda barra vazia** e conserva os ícones/atalhos da dock.
+
+A sobreposição foi verificada objetivamente pelo **KWin** após maximizar o Firefox: monitor **1920 × 1080**, área maximizada **1920 × 972** (108 px reservados na parte inferior pelos elementos da interface), sem a janela cobrir a área da barra/dock. Também foi realizada captura real da VM. A posição e aparência exatas podem variar conforme resolução, escala, plugins e versão do Krema; **janelas em fullscreen exclusivo** podem cobrir painéis intencionalmente.
+
+**Em uma instalação já configurada com Sweet e Krema:**
+
+```bash
+cd ~/configs-linux
+git pull --ff-only
+bash scripts/corrigir-sweet-barra.sh status
+bash scripts/corrigir-sweet-barra.sh aplicar --salvar
+bash scripts/corrigir-sweet-barra.sh testar
+```
+
+O comando `aplicar --salvar` executa as seguintes ações:
+
+1. Salva um **backup local** dos arquivos de painel, Plasma Shell, tema e Krema em `~/.local/share/linux-hybrid/backups/sweet-barra/`.
+2. Localiza o painel KDE principal dinamicamente pela marca `hybridRole=toolbar` ou widget de bandeja (não depende do número de ID). Ajusta-o para **inferior, 36 px, largura total, sempre visível**, mantendo seus widgets.
+3. Remove **apenas** um painel auxiliar eventualmente criado pelo script de testes, caso esteja marcado `hybridRole=sweet-krema-reservation`. Não remove painéis do usuário.
+4. Reabre a Krema em `VisibilityMode=0` (sempre visível), `Edge=1` (inferior) e `FloatingMarginReference=0`, preservando seus apps fixados e a animação de ampliação.
+5. Atualiza o snapshot `sweet` com `--recursos --dock on`. A versão anterior do Sweet fica arquivada em `~/.local/share/linux-hybrid/profiles/.historico/`; **`hybrid-premium` permanece intacto**.
+
+Os comandos `status` e `testar` são apenas de leitura; o script não deve ser executado com `sudo`. Execute somente em **KDE Plasma/Wayland**, com o **tema Sweet ativo** e o pacote Krema instalado. Ele **não instala** o Sweet, não altera pacotes do sistema e não substitui o instalador `install.sh`.
+
+**Alternar/recuperar os perfis visuais:**
+
+```bash
+bash scripts/perfis-kde.sh listar
+bash scripts/perfis-kde.sh aplicar sweet
+bash scripts/perfis-kde.sh aplicar hybrid-premium
+bash scripts/perfis-kde.sh restaurar-ultimo
+```
+
+Para aproveitar o layout em **outro computador**, primeiro instale o tema e a Krema, copie o snapshot local privadamente ou refaça a personalização e execute `aplicar --salvar`. Os snapshots não são publicados no GitHub.
+
+> **Observação técnica:** a opção `ReserveScreenSpace` do Krema tem alterações ainda não lançadas no projeto. Por isso, não se baseie apenas nessa preferência para prever o comportamento. Verifique a **área útil real do KWin** quando houver problemas de sobreposição. A solução testada foi manter o painel KDE nativo inferior, com a dock configurada separadamente.
 
 ### Passo 5 — Listar e alternar os perfis
 
@@ -402,7 +443,8 @@ scripts/
 ├── kubuntu-hybrid-setup-v1.0.2.sh  # Instalador anterior para Kubuntu
 ├── perfil-barra-atual-kde.sh       # Configura painel + dock (KDE)
 ├── alternar-barra-kde.sh           # KDE original ↔ personalizado (legado)
-└── perfis-kde.sh                  # Gestao de multiplos perfis visuais KDE
+├── perfis-kde.sh                  # Gestao de multiplos perfis visuais KDE
+└── corrigir-sweet-barra.sh        # Sweet inferior sem sobreposicao e com dock Krema
 tests/
 ├── fixtures/                   # Exemplos de /etc/os-release
 ├── smoke.sh                    # Testes do instalador universal
