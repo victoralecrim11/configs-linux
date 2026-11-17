@@ -122,6 +122,64 @@ Foi feito backup prévio em `~/.local/share/linux-hybrid/backups/antes-lateral-f
 
 ---
 
+## KDE padrão com ícones centralizados e sem Krema (17/11/2026)
+
+**Aplicado e validado na VM Kubuntu 26.04.1 (Plasma 6.6.6/Wayland)**. Mantém a barra de tarefas do Kubuntu embaixo, o **Kickoff** à esquerda, o **Gerenciador de tarefas apenas com ícones** no centro e a **bandeja/relógio** à direita. A Krema fica desativada, inclusive na inicialização do perfil. O tema/ícones em uso não são removidos.
+
+### Como preparar e centralizar em outra instalação
+
+Depois de entrar na sessão KDE Plasma, clone o repositório (apenas uma vez):
+
+```bash
+sudo apt update && sudo apt install -y git
+cd "$HOME"
+git clone https://github.com/victoralecrim11/configs-linux.git
+cd configs-linux
+```
+
+Se o projeto já estiver clonado, execute `cd ~/configs-linux && git pull --ff-only` em vez de clonar novamente.
+
+```bash
+# Inspecionar o painel, sem alteracoes
+bash scripts/centralizar-barra-kde.sh --status
+
+# Fazer backup e centralizar os icones com dois espacadores nativos
+bash scripts/centralizar-barra-kde.sh --aplicar
+```
+
+O script detecta o painel com o applet `org.kde.plasma.icontasks` e exige o conjunto padrão de sete widgets do Kubuntu. Ele **não altera um painel desconhecido**, não apaga aplicativos nem reinstala pacotes. Cria cópias de segurança em `~/.local/share/linux-hybrid/backups/pre-centralizar-*/`. Para poder ordenar os widgets com segurança no Plasma 6.6, reinicia **somente o Plasma Shell**; suas janelas abertas permanecem. Se já houver os dois espaçadores necessários, não cria outros.
+
+**Forma manual, sem script:** clique com o botão direito no painel → **Entrar no modo de edição** → **Adicionar espaçador** duas vezes. Coloque um imediatamente à esquerda do **Gerenciador de tarefas apenas com ícones** e o outro imediatamente à direita, mantendo o Menu de Aplicativos à esquerda e a Bandeja do Sistema à direita. Deixe os espaçadores flexíveis/expansíveis. Essa é a mesma disposição aplicada automaticamente pelo script.
+
+### Salvar e ativar a aparência sem Krema
+
+Após centralizar, salve o perfil no gerenciador:
+
+```bash
+# Apenas na primeira vez
+bash scripts/perfis-kde.sh salvar kde-padrao-centralizado --recursos --dock off
+
+# Ativar o perfil, desativando Krema e seu autostart
+bash scripts/perfis-kde.sh aplicar kde-padrao-centralizado
+```
+
+Se você já tem o perfil salvo e fez alguma modificação, use `atualizar kde-padrao-centralizado --recursos --dock off` em vez de `salvar`, que protege perfis existentes contra sobrescrita.
+
+```bash
+# Verificar e alternar (comandos na raiz do repositório)
+bash scripts/perfis-kde.sh status
+bash scripts/perfis-kde.sh listar
+bash scripts/perfis-kde.sh aplicar kde-padrao-centralizado   # KDE centralizado, sem Krema
+bash scripts/perfis-kde.sh aplicar sweet                     # Sweet anterior, com Krema
+bash scripts/perfis-kde.sh aplicar kubuntu-painel-padrao      # Kubuntu original + Krema
+```
+
+**Estado validado na VM:** espaçadores nativos `org.kde.plasma.panelspacer` com ordem `33;34;56;35;57;36;37;52;53` (esses IDs **não são portáteis**; o script detecta os IDs em cada máquina), Plasma Shell ativo, Krema encerrada, e override de autostart do usuário com `Hidden=true`. Snapshot salvo como `~/.local/share/linux-hybrid/profiles/kde-padrao-centralizado/`, com `dock=off`, configurações KDE e cerca de 203 MB de recursos locais.
+
+**Importante:** o snapshot pessoal não está no GitHub. O repositório oferece o script `centralizar-barra-kde.sh` e o gerenciador `perfis-kde.sh` para reproduzir o layout; ao migrar entre computadores, capture outro snapshot ou copie o seu perfil local de forma privada.
+
+---
+
 ## Gerenciador de perfis visuais KDE v2.1 — Original, Hybrid Premium, Sweet e outros
 
 ### Validação em ambiente real (17/11/2026)
