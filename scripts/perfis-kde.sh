@@ -168,8 +168,10 @@ copy_resources() {
   done
 }
 restore_config() {
-  local dir="$1" rel
+  local dir="$1" mode="${2:-restore}" rel
   for rel in "${FILES[@]}"; do
+    # Dock keep nao deve modificar nem o estado atual de autostart.
+    [[ "$rel" != "$AUTOSTART" || "$mode" != keep ]] || continue
     grep -Fxq -- "$rel" "$dir/tracked.txt" || continue
     mkdir -p -- "$(dirname -- "$CONFIG_DIR/$rel")"
     if [[ -f "$dir/config/$rel" && ! -L "$dir/config/$rel" ]]; then
@@ -246,7 +248,7 @@ apply_profile() {
   copy_resources "$dir"
   systemctl --user stop plasma-plasmashell.service ||
     die "Falha ao parar o Plasma; configuracoes originais preservadas."
-  if ! restore_config "$dir"; then
+  if ! restore_config "$dir" "$dock"; then
     msg "Falha ao restaurar; tentando reverter..."
     restore_config "$backup" || true
     systemctl --user start plasma-plasmashell.service || true
