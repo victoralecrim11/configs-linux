@@ -89,6 +89,39 @@ Fedora (DNF), CachyOS/Arch (Pacman/AUR) e openSUSE (Zypper/OBS) possuem detecç�
 
 ---
 
+## Experimento de painel lateral e restauração da barra de fábrica do Kubuntu (17/11/2026)
+
+Na VM **Kubuntu 26.04.1 / KDE Plasma 6.6.6 / Wayland**, com Krema 0.13.0, foi testado um painel vertical **à esquerda**, mantendo a **Krema centralizada embaixo**. Uma captura real com o navegador aberto não mostrou sobreposição entre a dock e o conteúdo do navegador na disposição testada. O resultado pode variar com a resolução, o dimensionamento de tela e outras janelas.
+
+Depois do teste, foi recriada a **barra de fábrica do Kubuntu** usando o template **já instalado na própria distro**:
+`/usr/share/plasma/layout-templates/org.kubuntu.desktop.defaultPanel/contents/layout.js`
+(`loadTemplate("org.kubuntu.desktop.defaultPanel")` via API do Plasma). Ela foi restaurada na **parte inferior**, com os sete widgets padrão: Kickoff, pager, gerenciador de tarefas só com ícones (`icontasks`), separador de margens, bandeja, relógio e mostrar área de trabalho.
+
+**Estado final validado:** um único painel KDE oficial embaixo (54 unidades de altura, escala da sessão 150%) e Krema ainda animada, **sempre visível** e centralizada acima dele. Para evitar que a Krema fique sobre a barra, o ajuste confirmado foi `Edge=1`, `VisibilityMode=0`, `Floating=true`, `FloatingMarginReference=1` (**borda interna do painel inferior sempre visível**) e `FloatingMargin=8`. A preferência `ReserveScreenSpace=true` permaneceu gravada. Captura real e reaplicação do perfil confirmaram a disposição; não é garantia universal para aplicativos/monitores diferentes.
+
+### Perfis guardados **localmente na VM**
+
+```bash
+cd ~/configs-linux
+bash scripts/perfis-kde.sh listar
+
+# Painel lateral à esquerda + Krema no centro inferior (teste)
+bash scripts/perfis-kde.sh aplicar lateral-teste
+
+# Barra KDE de fábrica embaixo + Krema acima (resultado final)
+bash scripts/perfis-kde.sh aplicar kubuntu-painel-padrao
+
+# Alternativas anteriores preservadas
+bash scripts/perfis-kde.sh aplicar sweet
+bash scripts/perfis-kde.sh aplicar hybrid-premium
+```
+
+**Atenção:** `lateral-teste` e `kubuntu-painel-padrao` são snapshots pessoais criados na VM, em `~/.local/share/linux-hybrid/profiles/`. **Eles não são instalados automaticamente pelo `git clone` e não foram enviados ao GitHub.** Caso vá usá-los em outra instalação, faça uma cópia privada dos perfis e valide os temas e widgets presentes. A aparência Sweet e os Candy Icons foram mantidos no sistema; o que voltou ao padrão foi **a disposição da barra do Kubuntu**, não todos os temas globais.
+
+Foi feito backup prévio em `~/.local/share/linux-hybrid/backups/antes-lateral-fabrica-*/`. O perfil lateral foi salvo antes da restauração, e o perfil de fábrica foi salvo e **reaplicado realmente**, verificando `panelIds.length=1`, `location=bottom`, widget `org.kde.plasma.icontasks`, Plasma ativo e Krema em execução. O perfil `sweet` não foi sobrescrito.
+
+---
+
 ## Gerenciador de perfis visuais KDE v2.1 — Original, Hybrid Premium, Sweet e outros
 
 ### Validação em ambiente real (17/11/2026)
