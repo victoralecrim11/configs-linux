@@ -151,6 +151,15 @@ grep -q '^layout=novo-visual$' "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
 bash "$SCRIPT" restaurar-excluido mais-novo >/dev/null
 [[ -f "$STATE/mais-novo/.snapshot" ]]
 
+# Um painel REAL sem gerenciador de tarefas nao pode desligar a unica dock.
+printf '[Containments][9]\nplugin=org.kde.plasma.kickoff\n' > "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+bash "$SCRIPT" salvar painel-sem-tarefas --dock on >/dev/null
+if bash "$SCRIPT" aplicar painel-sem-tarefas --dock off --dry-run > /dev/null 2>&1; then
+  echo '[ERRO] Aceitou dock off sem icontasks no painel.' >&2; exit 1
+fi
+output="$(bash "$SCRIPT" aplicar painel-sem-tarefas --dock on --dry-run)"
+grep -q 'dock=on' <<< "$output"
+
 printf 'conteudo-externo\n' > "$TMP/externo"
 rm -f -- "$CONFIG/kwinrc"
 ln -s -- "$TMP/externo" "$CONFIG/kwinrc"
