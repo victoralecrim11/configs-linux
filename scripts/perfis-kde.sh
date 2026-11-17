@@ -107,7 +107,7 @@ save_profile() {
     rm -rf -- "$tmp"; die "Falha ao capturar arquivos KDE."
   fi
   if [[ -e "$dir" ]]; then
-    old="$HISTORY/$name-$(date +%Y%m%d-%H%M%S)-$$"
+    old="$HISTORY/$name-$(date +%Y%m%d-%H%M%S)-${BASHPID}"
     mv -- "$dir" "$old" || { rm -rf -- "$tmp"; die "Nao consegui preservar o perfil anterior."; }
   fi
   if ! mv -- "$tmp" "$dir"; then
@@ -251,7 +251,7 @@ apply_profile() {
     [[ ! -L "$CONFIG_DIR/$rel" ]] ||
       die "Arquivo de configuracao e um symlink ($CONFIG_DIR/$rel). Nao alterarei atalhos externos."
   done
-  backup="$HISTORY/antes-$name-$(date +%Y%m%d-%H%M%S)-$"
+  backup="$HISTORY/antes-$name-$(date +%Y%m%d-%H%M%S)-${BASHPID}"
   capture "$backup" "$(dock_detect)" 0 rollback
   msg "Backup automatico: $backup"
   copy_resources "$dir"
