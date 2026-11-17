@@ -105,17 +105,17 @@ bash "$SCRIPT" importar-legado personalizada >/dev/null
 output="$(bash "$SCRIPT" detalhes personalizada)"
 grep -q 'kind=legacy' <<< "$output"
 
-# CRUD: criar, editar, copiar, renomear, lixeira e recuperacao (sem KDE real).
+# CRUD independente da sessao grafica real.
 bash "$SCRIPT" criar novo --dock off >/dev/null
 [[ -f "$STATE/novo/.snapshot" ]]
 bash "$SCRIPT" duplicar novo nova-copia >/dev/null
 [[ -f "$STATE/nova-copia/.snapshot" ]]
 bash "$SCRIPT" renomear nova-copia tema-renomeado >/dev/null
 [[ ! -e "$STATE/nova-copia" && -f "$STATE/tema-renomeado/.snapshot" ]]
-bash "$SCRIPT" status | grep -q 'tema-renomeado'
-# Excluir NUNCA deve prosseguir automaticamente sem confirmacao.
+output="$(bash "$SCRIPT" status)"
+grep -q tema-renomeado <<< "$output"
 if bash "$SCRIPT" excluir tema-renomeado </dev/null >/dev/null 2>&1; then
-  echo '[ERRO] Excluir perfil sem confirmacao foi permitido.' >&2; exit 1
+  echo '[ERRO] Exclusao sem confirmacao foi permitida.' >&2; exit 1
 fi
 bash "$SCRIPT" excluir tema-renomeado --yes >/dev/null
 [[ ! -e "$STATE/tema-renomeado" ]]
@@ -123,39 +123,16 @@ output="$(bash "$SCRIPT" lixeira)"
 grep -q 'tema-renomeado--excluido-' <<< "$output"
 bash "$SCRIPT" restaurar-excluido tema-renomeado >/dev/null
 [[ -f "$STATE/tema-renomeado/.snapshot" ]]
-# Renomear o perfil ativo deve atualizar o marcador, mas nao a aparencia atual.
 bash "$SCRIPT" renomear novo mais-novo >/dev/null
 grep -qx mais-novo "$STATE/.ativo"
 printf 'layout=novo-visual\n' > "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
 bash "$SCRIPT" editar mais-novo --dock off >/dev/null
-grep -q '^layout=novo-visual
-rm -f -- "$CONFIG/kwinrc"
-ln -s -- "$TMP/externo" "$CONFIG/kwinrc"
-if bash "$SCRIPT" salvar symlink-test >/dev/null 2>&1; then
-  echo '[ERRO] Capturou arquivo de configuracao simbolico' >&2; exit 1
-fi
-if bash "$SCRIPT" aplicar original >/dev/null 2>&1; then
-  echo '[ERRO] Aplicou sobre arquivo de configuracao simbolico' >&2; exit 1
-fi
-grep -q conteudo-externo "$TMP/externo"
-echo '[OK] Perfis KDE: salvar, listar, simular, alternar, rollback, atualizar, recursos, legado e symlinks.'
- "$STATE/mais-novo/config/plasma-org.kde.plasma.desktop-appletsrc"
-bash "$SCRIPT" historico mais-novo | grep -q 'mais-novo--anterior-'
-# Excluir perfil ativo limpa o marcador, mas preserva o ambiente atual.
+grep -q '^layout=novo-visual$' "$STATE/mais-novo/config/plasma-org.kde.plasma.desktop-appletsrc"
+output="$(bash "$SCRIPT" historico mais-novo)"
+grep -q 'mais-novo--anterior-' <<< "$output"
 bash "$SCRIPT" excluir mais-novo --yes >/dev/null
 [[ ! -e "$STATE/.ativo" ]]
-grep -q '^layout=novo-visual
-rm -f -- "$CONFIG/kwinrc"
-ln -s -- "$TMP/externo" "$CONFIG/kwinrc"
-if bash "$SCRIPT" salvar symlink-test >/dev/null 2>&1; then
-  echo '[ERRO] Capturou arquivo de configuracao simbolico' >&2; exit 1
-fi
-if bash "$SCRIPT" aplicar original >/dev/null 2>&1; then
-  echo '[ERRO] Aplicou sobre arquivo de configuracao simbolico' >&2; exit 1
-fi
-grep -q conteudo-externo "$TMP/externo"
-echo '[OK] Perfis KDE: salvar, listar, simular, alternar, rollback, atualizar, recursos, legado e symlinks.'
- "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+grep -q '^layout=novo-visual$' "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
 bash "$SCRIPT" restaurar-excluido mais-novo >/dev/null
 [[ -f "$STATE/mais-novo/.snapshot" ]]
 
