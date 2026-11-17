@@ -29,6 +29,8 @@ esac
 MOCK
 printf '#!/bin/sh\nexit 1\n' > "$TMP/mock/pgrep"
 printf '#!/bin/sh\nexit 0\n' > "$TMP/mock/pkill"
+# Jamais execute a Krema real em um teste isolado: mocka o binario tambem.
+printf '#!/bin/sh\nexit 0\n' > "$TMP/mock/krema"
 chmod +x "$TMP/mock/"*
 
 CONFIG="$XDG_CONFIG_HOME"
