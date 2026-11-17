@@ -8,6 +8,7 @@ CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}"
 ROOT="$DATA_DIR/linux-hybrid/profiles"
 HISTORY="$ROOT/.historico"
+TRASH="$ROOT/.lixeira"
 ACTIVE="$ROOT/.ativo"
 LEGACY="$DATA_DIR/kubuntu-hybrid/perfis-alternancia"
 PLASMA="plasma-org.kde.plasma.desktop-appletsrc"
@@ -21,19 +22,26 @@ usage() {
 cat <<'HELP'
 Gerenciador de perfis visuais KDE Plasma 6 (nao instala aplicativos)
 Uso:
-  bash scripts/perfis-kde.sh salvar NOME [--recursos] [--dock on|off|keep]
-  bash scripts/perfis-kde.sh atualizar NOME [--recursos] [--dock on|off|keep]
-  bash scripts/perfis-kde.sh listar
-  bash scripts/perfis-kde.sh status
-  bash scripts/perfis-kde.sh detalhes NOME
+  bash scripts/perfis-kde.sh criar NOME [--recursos] [--dock on|off|keep]
+  bash scripts/perfis-kde.sh editar NOME [--recursos] [--dock on|off|keep]
+  bash scripts/perfis-kde.sh duplicar ORIGEM DESTINO
+  bash scripts/perfis-kde.sh renomear ANTIGO NOVO
+  bash scripts/perfis-kde.sh excluir NOME [--yes]
+  bash scripts/perfis-kde.sh lixeira
+  bash scripts/perfis-kde.sh restaurar-excluido NOME
+  bash scripts/perfis-kde.sh historico NOME
+  bash scripts/perfis-kde.sh comparar NOME
+  bash scripts/perfis-kde.sh listar|status|detalhes NOME
   bash scripts/perfis-kde.sh aplicar NOME [--dry-run]
   bash scripts/perfis-kde.sh restaurar-ultimo
   bash scripts/perfis-kde.sh importar-legado original|personalizada
 
+Aliases antigos: salvar=criar; atualizar=editar.
+Editar significa capturar o visual KDE atual, NAO editar texto no terminal.
+Excluir move o snapshot para uma lixeira local, sem mexer no visual ativo.
 Nomes: letras minusculas, numeros, _ e -; ate 40 caracteres.
-Os perfis ficam no HOME do usuario, fora do repositorio publico.
-Use --recursos para incluir temas, icones e wallpapers locais (pode ocupar espaco).
-A aplicacao nao instala Krema, Sweet, temas, fontes ou widgets ausentes.
+Use --recursos para copiar temas, icones e wallpapers locais (pode ocupar espaco).
+O script nao instala programas nem fontes de terceiros; snapshots sao privados.
 HELP
 }
 valid_name() { [[ "$1" =~ ^[a-z0-9][a-z0-9_-]{0,39}$ ]]; }
@@ -43,7 +51,7 @@ check_kde() {
   [[ "${XDG_CURRENT_DESKTOP:-}" == *KDE* || "${XDG_CURRENT_DESKTOP:-}" == *Plasma* ]] ||
     die "Entre numa sessao KDE Plasma antes de salvar/aplicar."
 }
-prepare() { mkdir -p -- "$ROOT" "$HISTORY"; }
+prepare() { mkdir -p -- "$ROOT" "$HISTORY" "$TRASH"; }
 read_metadata() {
   local file="$1" key="$2"
   [[ -f "$file" ]] || return 0
@@ -107,7 +115,7 @@ save_profile() {
     rm -rf -- "$tmp"; die "Falha ao capturar arquivos KDE."
   fi
   if [[ -e "$dir" ]]; then
-    old="$HISTORY/$name-$(date +%Y%m%d-%H%M%S)-${BASHPID}"
+    old="$(unique_archive "$HISTORY" "$name" anterior)"
     mv -- "$dir" "$old" || { rm -rf -- "$tmp"; die "Nao consegui preservar o perfil anterior."; }
   fi
   if ! mv -- "$tmp" "$dir"; then
@@ -126,6 +134,127 @@ profile_dir() {
     die "Perfil '$name' nao existe ou esta incompleto. Execute listar."
   printf '%s\n' "$dir"
 }
+# IDs de historico incluem o nome e um sufixo exclusivo.
+unique_archive() {
+  local bucket="$1" name="$2" tag="$3" tmp
+  tmp="$(mktemp -d "$bucket/$name--$tag-$(date +%Y%m%d-%H%M%S)-XXXXXXXX")" ||
+    die "Nao foi possivel reservar diretorio para o historico."
+  rmdir -- "$tmp" || die "Nao foi possivel preparar destino do historico."
+  printf '%s\n' "$tmp"
+}
+# Confirmacao obrigatoria para excluir snapshot, inclusive em sessao nao interativa.
+confirm_delete() {
+  local name="$1" auto="$2" answer=""
+  if [[ "$auto" == 1 ]]; then return 0; fi
+  [[ -t 0 ]] || die "Exclusao cancelada: requer terminal para confirmar ou --yes."
+  printf "Mover o perfil '%s' para a lixeira local? [s/N] " "$name" >&2
+  read -r answer || die "Operacao cancelada."
+  [[ "$answer" =~ ^[sSyY]$ ]] || die "Operacao cancelada."
+}
+clone_profile() {
+  local source="$1" name="$2" dir temp
+  check_user; check_name "$source"; check_name "$name"
+  [[ "$source" != "$name" ]] || die "Origem e destino devem ser diferentes."
+  dir="$(profile_dir "$source")"
+  prepare
+  [[ ! -e "$ROOT/$name" && ! -L "$ROOT/$name" ]] ||
+    die "Perfil de destino '$name' ja existe."
+  temp="$(mktemp -d "$ROOT/.duplicar-XXXXXXXX")"
+  if ! cp -a -- "$dir/." "$temp/"; then
+    rm -rf -- "$temp"; die "Nao consegui duplicar o perfil."
+  fi
+  # Historico e estado ativo permanecem inalterados.
+  if ! mv -- "$temp" "$ROOT/$name"; then
+    rm -rf -- "$temp"; die "Nao consegui finalizar a duplicacao."
+  fi
+  msg "Copia criada: '$source' -> '$name'. Visual atual inalterado."
+}
+rename_profile() {
+  local source="$1" name="$2" from
+  check_user; check_name "$source"; check_name "$name"
+  [[ "$source" != "$name" ]] || die "Origem e destino devem ser diferentes."
+  from="$(profile_dir "$source")"
+  prepare
+  [[ ! -e "$ROOT/$name" && ! -L "$ROOT/$name" ]] ||
+    die "Perfil de destino '$name' ja existe."
+  mv -- "$from" "$ROOT/$name" || die "Nao foi possivel renomear."
+  if [[ -f "$ACTIVE" && "$(cat "$ACTIVE")" == "$source" ]]; then
+    printf '%s\n' "$name" > "$ACTIVE"
+  fi
+  msg "Renomeado: '$source' -> '$name'. Visual atual inalterado."
+}
+delete_profile() {
+  local name="$1" yes="$2" dir moved
+  check_user; check_name "$name"
+  dir="$(profile_dir "$name")"
+  confirm_delete "$name" "$yes"
+  prepare
+  moved="$(unique_archive "$TRASH" "$name" excluido)"
+  mv -- "$dir" "$moved" || die "Nao foi possivel mover para a lixeira."
+  if [[ -f "$ACTIVE" && "$(cat "$ACTIVE")" == "$name" ]]; then
+    rm -f -- "$ACTIVE"
+  fi
+  msg "Perfil '$name' movido para a lixeira: $moved"
+  msg "Nenhum tema, janela, painel ou aplicativo foi alterado."
+}
+show_trash() {
+  local folder found=0
+  [[ -d "$TRASH" ]] || { msg "Lixeira vazia."; return; }
+  for folder in "$TRASH"/*; do
+    [[ -d "$folder" && ! -L "$folder" && -f "$folder/.snapshot" ]] || continue
+    msg "${folder##*/}"
+    found=1
+  done
+  (( found )) || msg "Lixeira vazia."
+}
+restore_deleted() {
+  local name="$1" folder best="" candidate
+  check_user; check_name "$name"
+  prepare
+  [[ ! -e "$ROOT/$name" && ! -L "$ROOT/$name" ]] ||
+    die "Ja existe perfil ativo chamado '$name'. Renomeie-o antes de recuperar."
+  for folder in "$TRASH/$name"--excluido-*; do
+    [[ -d "$folder" && ! -L "$folder" && -f "$folder/.snapshot" ]] || continue
+    if [[ -z "$best" || "$folder" -nt "$best" ]]; then best="$folder"; fi
+  done
+  [[ -n "$best" ]] || die "Nao foi encontrada uma copia excluida de '$name'."
+  mv -- "$best" "$ROOT/$name" || die "Falha ao restaurar perfil excluido."
+  msg "Perfil '$name' recuperado da lixeira. Para ativa-lo: aplicar $name"
+}
+show_history() {
+  local name="$1" folder found=0
+  check_name "$name"
+  [[ -d "$HISTORY" ]] || { msg "Nenhuma versao arquivada de '$name'."; return; }
+  for folder in "$HISTORY/$name"--* "$HISTORY/$name"-[0-9]*; do
+    [[ -d "$folder" && ! -L "$folder" && -f "$folder/.snapshot" ]] || continue
+    msg "${folder##*/}"
+    found=1
+  done
+  (( found )) || msg "Nenhuma versao arquivada de '$name'."
+}
+compare_profile() {
+  local name="$1" dir file key group actual stored value state
+  check_name "$name"; dir="$(profile_dir "$name")"
+  msg "Perfil: $name | Comparacao com o KDE atual"
+  if ! command -v kreadconfig6 >/dev/null 2>&1; then
+    die "kreadconfig6 e necessario para comparar temas e icones."
+  fi
+  for state in "Tema global|kdeglobals|KDE|LookAndFeelPackage" "Icones|kdeglobals|Icons|Theme" "Esquema de cores|kdeglobals|General|ColorScheme" "Krema visibilidade|kremarc|General|VisibilityMode"; do
+    IFS='|' read -r value file group key <<< "$state"
+    actual="$(kreadconfig6 --file "$CONFIG_DIR/$file" --group "$group" --key "$key" 2>/dev/null || true)"
+    if [[ -f "$dir/config/$file" ]]; then
+      stored="$(kreadconfig6 --file "$dir/config/$file" --group "$group" --key "$key" 2>/dev/null || true)"
+    else stored="(arquivo ausente)"; fi
+    printf '%s: ativo=[%s] salvo=[%s]\n' "$value" "$actual" "$stored"
+  done
+  if [[ -f "$dir/config/$PLASMA" ]] && cmp -s -- "$CONFIG_DIR/$PLASMA" "$dir/config/$PLASMA"; then
+    msg "Painel: conteudo de arquivo identico ao snapshot."
+  else
+    msg "Painel: arquivo diferente (o Plasma pode reordenar metadados)."
+  fi
+  msg "Comparar nao altera nada. Use editar NOME para capturar a aparencia atual."
+}
+
 list_profiles() {
   local dir name
   if [[ ! -d "$ROOT" ]]; then msg "Nenhum perfil visual salvo."; return; fi
@@ -341,7 +470,7 @@ case "${1:---help}" in
   detalhes)
     [[ "$#" == 2 ]] || die "Uso: detalhes NOME"
     details "$2" ;;
-  salvar|atualizar)
+  salvar|atualizar|criar|editar)
     (( $# >= 2 )) || die "Informe o nome do perfil."
     operation="$1"; name="$2"; assets=0; dock=auto; shift 2
     while (($#)); do
@@ -357,12 +486,34 @@ case "${1:---help}" in
     if [[ "$assets" == 1 ]]; then
       msg "AVISO: --recursos copia temas, icones e wallpapers de usuario. Pode consumir bastante espaco."
     fi
-    if [[ "$operation" == atualizar ]]; then
+    if [[ "$operation" == atualizar || "$operation" == editar ]]; then
       save_profile "$name" 1 "$assets" "$dock"
     else
       save_profile "$name" 0 "$assets" "$dock"
     fi
     ;;
+  duplicar)
+    [[ "$#" == 3 ]] || die "Uso: duplicar ORIGEM DESTINO"
+    clone_profile "$2" "$3" ;;
+  renomear)
+    [[ "$#" == 3 ]] || die "Uso: renomear ANTIGO NOVO"
+    rename_profile "$2" "$3" ;;
+  excluir)
+    [[ "$#" == 2 || ( "$#" == 3 && "$3" == --yes ) ]] ||
+      die "Uso: excluir NOME [--yes]"
+    delete_profile "$2" "$([[ "${3:-}" == --yes ]] && echo 1 || echo 0)" ;;
+  lixeira)
+    [[ "$#" == 1 ]] || die "Uso: lixeira"
+    show_trash ;;
+  restaurar-excluido)
+    [[ "$#" == 2 ]] || die "Uso: restaurar-excluido NOME"
+    restore_deleted "$2" ;;
+  historico)
+    [[ "$#" == 2 ]] || die "Uso: historico NOME"
+    show_history "$2" ;;
+  comparar)
+    [[ "$#" == 2 ]] || die "Uso: comparar NOME"
+    compare_profile "$2" ;;
   aplicar)
     [[ "$#" == 2 || ( "$#" == 3 && "$3" == --dry-run ) ]] ||
       die "Uso: aplicar NOME [--dry-run]"
