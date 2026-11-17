@@ -1,6 +1,6 @@
-# Configurações Linux — Kubuntu 26.04 LTS
+# Configurações Linux — KDE Plasma multidistro
 
-Scripts de personalização do **Kubuntu 26.04 LTS / KDE Plasma 6**, com visual inspirado em Windows 11, Garuda e dock no estilo macOS. Desenvolvidos e testados inicialmente na VM `kubuntu-vm`.
+Scripts de personalização do **KDE Plasma 6** com perfis de instalação para **Kubuntu 26.04 LTS e Debian 13**, visual inspirado em Windows 11/Garuda/macOS e perfis visuais nomeados (v2.1). O projeto começou na VM `kubuntu-vm`.
 
 ## Comece aqui: instalador universal v2
 
@@ -89,6 +89,166 @@ Fedora (DNF), CachyOS/Arch (Pacman/AUR) e openSUSE (Zypper/OBS) possuem detecç�
 
 ---
 
+## Gerenciador de perfis visuais KDE v2.1 — Original, Hybrid Premium, Sweet e outros
+
+O **`scripts/perfis-kde.sh`** permite salvar, listar, inspecionar e aplicar **vários perfis de aparência com nomes diferentes**, sem sobrescrever a configuração anterior. É independente dos perfis de **instalação** do `install.sh`:
+
+- **Premium / Dev / Full:** instalam programas e preparam o sistema.
+- **Original / hybrid-premium / sweet / outros:** são **fotografias locais da aparência do KDE**. Alternar entre elas **não** reinstala programas.
+
+Os perfis ficam **somente no computador**, em `${XDG_DATA_HOME:-$HOME/.local/share}/linux-hybrid/profiles/`. Não são adicionados ao Git automaticamente e podem conter preferências pessoais, wallpapers ou fontes que você não deve publicar.
+
+### Passo 1 — Preparar a distribuição, clonar o repositório e validar
+
+Entre na sessão gráfica **KDE Plasma 6** e abra o Konsole. No Kubuntu 26.04 ou Debian 13:
+
+```bash
+sudo apt update
+sudo apt install -y git
+
+cd "$HOME"
+git clone https://github.com/victoralecrim11/configs-linux.git
+cd configs-linux
+```
+
+Se já existir um clone, use `cd ~/configs-linux && git pull --ff-only` (ou o nome da pasta local antiga, se não a renomeou). **Não execute o clone duas vezes**.
+
+Confira o script sem modificar o sistema:
+
+```bash
+bash -n scripts/perfis-kde.sh
+bash scripts/perfis-kde.sh --help
+bash scripts/perfis-kde.sh listar
+bash tests/perfis-kde-smoke.sh
+```
+
+O último comando executa testes **isolados**, com diretórios temporários e simulação de `systemctl`, sem alterar sua sessão KDE real.
+
+### Passo 2 — Salvar o KDE original ANTES de personalizar
+
+Em um KDE recém-instalado, antes de instalar temas, docks e widgets:
+
+```bash
+bash scripts/perfis-kde.sh salvar original --dock off
+```
+
+Isso guarda os painéis, widgets, preferências visuais e a indicação de dock desligada. **Não chame de `original` uma personalização já modificada**: se você fez alterações antes de capturar o padrão, elas serão consideradas parte desse perfil.
+
+### Passo 3 — Configurar e salvar o Hybrid Premium
+
+No Kubuntu 26.04 ou Debian 13, instale os componentes do nosso visual usando o instalador principal (preferencialmente teste primeiro numa VM):
+
+```bash
+bash install.sh --profile premium --dry-run
+bash install.sh --profile premium
+```
+
+Depois que terminar, faça logout/login se necessário, confirme que o painel superior e o Krema estão como deseja e **salve um perfil separado**:
+
+```bash
+bash scripts/perfis-kde.sh salvar hybrid-premium --recursos --dock on
+```
+
+O nome pode ser diferente. `--dock on` faz o gerenciador solicitar a ativação da dock Krema sempre que o perfil for aplicado. `--recursos` inclui cópias dos recursos **locais do usuário** (temas, ícones, wallpapers e fontes), se existirem.
+
+### Passo 4 — Montar o visual Sweet do vídeo e salvar como outro perfil
+
+1. **Mantenha o perfil `hybrid-premium` salvo** antes de qualquer mudança.
+2. Abra **Configurações do Sistema → Cores e temas → Tema global** (o nome pode variar conforme a versão do Plasma).
+3. Escolha **Obter novos temas globais**, procure **Sweet** e confira a autoria, os requisitos e a compatibilidade com **Plasma 6** antes de instalar/aplicar. O nome exato e os componentes disponíveis no KDE Store podem mudar.
+4. Ajuste estilo Plasma, decoração de janelas, ícones, fontes, papel de parede, transparência/desfoque, efeitos e disposição dos painéis, seguindo o vídeo. Verifique se os efeitos funcionam corretamente no seu hardware e sessão gráfica.
+5. Salve os wallpapers que deseja transportar em `~/.local/share/wallpapers/`; arquivos que ficaram em `~/Downloads` ou em outros diretórios **não são incluídos** em `--recursos`.
+6. Após concluir as mudanças, salve o novo visual:
+
+```bash
+bash scripts/perfis-kde.sh salvar sweet --recursos --dock keep
+```
+
+Use `--dock on` em vez de `keep` caso queira **ativar** o Krema com o Sweet; use `--dock off` se quiser **ocultá-lo** nesse perfil. `keep` mantém o estado atual da dock ao aplicar o perfil.
+
+**Importante:** o script **não baixa nem instala automaticamente o tema Sweet**. Ele registra o estado **depois** que você configurá-lo no KDE. Também não captura pacotes de sistema, applets não instalados ou temas disponíveis somente em `/usr/share`. Para reproduzir em outra distro, instale os componentes faltantes antes de aplicar o snapshot.
+
+### Passo 5 — Listar e alternar os perfis
+
+```bash
+# Ver nomes e opcoes
+bash scripts/perfis-kde.sh listar
+bash scripts/perfis-kde.sh status
+bash scripts/perfis-kde.sh detalhes sweet
+
+# Simular uma troca sem tocar no Plasma
+bash scripts/perfis-kde.sh aplicar sweet --dry-run
+
+# Alternar efetivamente
+bash scripts/perfis-kde.sh aplicar original
+bash scripts/perfis-kde.sh aplicar hybrid-premium
+bash scripts/perfis-kde.sh aplicar sweet
+```
+
+Ao aplicar um perfil, o programa salva automaticamente o estado anterior, interrompe e reinicia **apenas o Plasma Shell** para recuperar seus arquivos de configuração e ajusta o estado da dock conforme o snapshot. **Pode ser necessário fazer logout/login** para que temas e efeitos de janela sejam atualizados. Faça a troca dentro do KDE, como usuário comum, **sem `sudo bash`**.
+
+### Passo 6 — Atualizar um perfil existente sem perder a versão anterior
+
+O comando `salvar` **recusa sobrescrever** um perfil que já existe. Se você melhorar seu tema Sweet e quiser registrá-lo novamente:
+
+```bash
+bash scripts/perfis-kde.sh atualizar sweet --recursos --dock keep
+```
+
+A versão antiga vai para `~/.local/share/linux-hybrid/profiles/.historico/`. Para criar outro estilo, use outro nome:
+
+```bash
+bash scripts/perfis-kde.sh salvar sweet-v2 --recursos --dock on
+```
+
+### Passo 7 — Recuperação se uma troca causar problemas
+
+**Antes de cada aplicação**, o script cria um backup da configuração que estava ativa. Para restaurar o backup automático mais recente:
+
+```bash
+bash scripts/perfis-kde.sh restaurar-ultimo
+```
+
+Os backups ficam em `~/.local/share/linux-hybrid/profiles/.historico/`. A restauração é um novo processo de troca e gera outro backup; ela **não desinstala temas nem pacotes**. Se o Plasma não abrir, encerre a sessão e volte a entrar; em casos extremos, use um terminal TTY e restaure manualmente os arquivos respaldados. Não exclua o diretório de backups antes de confirmar o funcionamento.
+
+### Passo 8 — Aproveitar backups da versão anterior
+
+Se você já usava `alternar-barra-kde.sh`, o gerenciador novo pode importar snapshots locais antigos quando existirem:
+
+```bash
+bash scripts/perfis-kde.sh importar-legado personalizada
+bash scripts/perfis-kde.sh importar-legado original
+```
+
+**Execute somente para os snapshots que existirem.** A importação não sobrescreve perfis com o mesmo nome. Os backups legados guardavam apenas o painel, `plasmashellrc` e `kremarc`: cores, fontes, recursos e temas adicionais **não estavam completos**, portanto é melhor criar um novo perfil com `salvar hybrid-premium --recursos --dock on` no ambiente já personalizado.
+
+O script anterior `alternar-barra-kde.sh` continua disponível para compatibilidade, mas **prefira `perfis-kde.sh` para os novos perfis**. Não alterne entre os dois gerenciadores durante a mesma sessão, pois eles mantêm históricos e indicadores de perfil independentes.
+
+### Quais arquivos e recursos entram no perfil?
+
+- **Configuração KDE:** `plasma-org.kde.plasma.desktop-appletsrc`, `plasmashellrc`, `kdeglobals`, `kwinrc`, `ksplashrc`, `kcmfonts`, `kremarc` e override de autostart do Krema (se existir).
+- **Com `--recursos`:** dados de usuário em `~/.local/share/plasma/look-and-feel`, `plasma/desktoptheme`, `color-schemes`, `aurorae/themes`, `icons`, `wallpapers` e `fonts`.
+- **Não entra automaticamente:** pacotes instalados por APT, plugins externos do KWin, widgets ausentes, conteúdo de `/usr/share`, wallpapers fora dos diretórios listados ou fontes instaladas em outros caminhos.
+
+Recursos incluídos são **recuperados somente quando faltam**: o gerenciador não sobrescreve nem apaga temas e ícones que já existem na máquina de destino. O backup pode ocupar bastante espaço dependendo dos pacotes de ícones/fontes. Perfis gravados com outro nome de usuário ou monitor podem conter caminhos absolutos e disposições de tela diferentes; revise antes de aplicar em outra máquina.
+
+### Referência de comandos v2.1
+
+| Comando | Ação |
+| --- | --- |
+| `salvar NOME [--recursos] [--dock on\|off\|keep]` | Cria perfil sem substituir outro |
+| `atualizar NOME [--recursos] [--dock on\|off\|keep]` | Nova versão, arquivando a anterior |
+| `listar` / `status` | Lista perfis / estado registrado |
+| `detalhes NOME` | Exibe metadados e tamanho dos recursos |
+| `aplicar NOME --dry-run` | Simula sem alterar |
+| `aplicar NOME` | Aplica configurações e dock |
+| `restaurar-ultimo` | Recupera o último backup automático |
+| `importar-legado original\|personalizada` | Importa snapshot do gerenciador antigo |
+
+Em todos os casos, prefixe os comandos com `bash scripts/perfis-kde.sh`, na raiz do repositório.
+
+---
+
 ## Estrutura
 
 ```text
@@ -102,10 +262,12 @@ lib/
 scripts/
 ├── kubuntu-hybrid-setup-v1.0.2.sh  # Instalador anterior para Kubuntu
 ├── perfil-barra-atual-kde.sh       # Configura painel + dock (KDE)
-└── alternar-barra-kde.sh           # KDE original ↔ personalizado
+├── alternar-barra-kde.sh           # KDE original ↔ personalizado (legado)
+└── perfis-kde.sh                  # Gestao de multiplos perfis visuais KDE
 tests/
 ├── fixtures/                   # Exemplos de /etc/os-release
-└── smoke.sh                    # Simulacoes e verificacoes
+├── smoke.sh                    # Testes do instalador universal
+└── perfis-kde-smoke.sh          # Testes isolados de perfis KDE
 .github/workflows/smoke.yml     # Testes automaticos no GitHub
 ```
 
