@@ -391,11 +391,18 @@ panel_for_dock() {
     target.hiding='none';
     print('KDE_DOCK_PANEL_OK:'+target.id+':'+target.location);
   })();"
-  result="$(busctl --user call org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell evaluateScript s "$js")" ||
-    die "Falha ao mover painel KDE para $edge."
-  [[ "$result" == *"KDE_DOCK_PANEL_OK:"* ]] ||
-    die "Posicao do painel nao confirmada: $result"
-  msg "Painel KDE: $edge."
+  # Apos start do plasmashell, o D-Bus pode estar ativo antes dos paineis.
+  # Aguarda ate a API expor o painel, sem reiniciar o Plasma novamente.
+  local tentativa
+  for tentativa in {1..20}; do
+    if result="$(busctl --user call org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell evaluateScript s "$js" 2>&1)" &&
+       [[ "$result" == *"KDE_DOCK_PANEL_OK:"* ]]; then
+      msg "Painel KDE: $edge."
+      return 0
+    fi
+    sleep 0.35
+  done
+  die "Painel KDE nao ficou disponivel a tempo ($edge). Detalhe: $result"
 }
 # A configuracao deve ser salva depois que o processo Krema terminar.
 krema_autohide() {
