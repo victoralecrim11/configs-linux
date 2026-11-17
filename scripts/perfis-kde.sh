@@ -66,7 +66,11 @@ capture() {
   mkdir -p -- "$dir/config"
   printf '%s\n' "${FILES[@]}" > "$dir/tracked.txt"
   for rel in "${FILES[@]}"; do
-    if [[ -f "$CONFIG_DIR/$rel" && ! -L "$CONFIG_DIR/$rel" ]]; then
+    if [[ -L "$CONFIG_DIR/$rel" ]]; then
+      printf 'ERRO: arquivo KDE e um symlink: %s\n' "$CONFIG_DIR/$rel" >&2
+      return 1
+    fi
+    if [[ -f "$CONFIG_DIR/$rel" ]]; then
       mkdir -p -- "$(dirname -- "$dir/config/$rel")"
       cp -p -- "$CONFIG_DIR/$rel" "$dir/config/$rel" || return 1
     fi
@@ -242,7 +246,12 @@ apply_profile() {
   systemctl --user is-active --quiet plasma-plasmashell.service ||
     die "Plasma Shell nao esta ativo via systemd; nenhuma alteracao realizada."
   prepare
-  backup="$HISTORY/antes-$name-$(date +%Y%m%d-%H%M%S)-$$"
+  local rel
+  for rel in "${FILES[@]}"; do
+    [[ ! -L "$CONFIG_DIR/$rel" ]] ||
+      die "Arquivo de configuracao e um symlink ($CONFIG_DIR/$rel). Nao alterarei atalhos externos."
+  done
+  backup="$HISTORY/antes-$name-$(date +%Y%m%d-%H%M%S)-$"
   capture "$backup" "$(dock_detect)" 0 rollback
   msg "Backup automatico: $backup"
   copy_resources "$dir"
