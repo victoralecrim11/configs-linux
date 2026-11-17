@@ -63,6 +63,106 @@ grep -q SIMULACAO <<< "$output"
 grep -q manualmente-alterado "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
 
 bash "$SCRIPT" aplicar original >/dev/null
+# Backups devem ter sufixo PID, sem '
+[[ ! -e "$CONFIG/kwinrc" ]]
+grep -q '^Hidden=true$' "$CONFIG/autostart/com.bhyoo.krema.autostart.desktop"
+
+bash "$SCRIPT" aplicar sweet >/dev/null
+# dock=keep precisa conservar o override de autostart existente.
+grep -q '^Hidden=true$' "$CONFIG/autostart/com.bhyoo.krema.autostart.desktop"
+grep -q 'theme=Sweet' "$CONFIG/kdeglobals"
+grep -q 'layout=sweet' "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+grep -q 'someKWinEffect=true' "$CONFIG/kwinrc"
+[[ -f "$XDG_DATA_HOME/color-schemes/sweet.colors" ]]
+output="$(bash "$SCRIPT" status)"
+grep -q 'sweet' <<< "$output"
+
+printf 'layout=sweet-atualizado\n' > "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+bash "$SCRIPT" atualizar sweet --dock keep >/dev/null
+grep -q 'layout=sweet-atualizado' "$STATE/sweet/config/plasma-org.kde.plasma.desktop-appletsrc"
+find "$STATE/.historico" -maxdepth 1 -type d -name 'sweet-*' | grep -q sweet
+
+printf 'layout=antes-da-falha\n' > "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+export FAIL_FIRST_START="$TMP/falha"
+if bash "$SCRIPT" aplicar original > "$TMP/falha.log" 2>&1; then
+  echo '[ERRO] Deveria falhar quando Plasma nao reinicia' >&2; exit 1
+fi
+unset FAIL_FIRST_START
+grep -q 'layout=antes-da-falha' "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+printf 'layout=temporario\n' > "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+bash "$SCRIPT" restaurar-ultimo >/dev/null
+grep -q 'layout=antes-da-falha' "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+
+mkdir -p -- "$XDG_DATA_HOME/kubuntu-hybrid/perfis-alternancia/personalizada"
+printf 'layout=legado\n' > "$XDG_DATA_HOME/kubuntu-hybrid/perfis-alternancia/personalizada/plasma-org.kde.plasma.desktop-appletsrc"
+touch "$XDG_DATA_HOME/kubuntu-hybrid/perfis-alternancia/personalizada/.snapshot"
+bash "$SCRIPT" importar-legado personalizada >/dev/null
+output="$(bash "$SCRIPT" detalhes personalizada)"
+grep -q 'kind=legacy' <<< "$output"
+
+printf 'conteudo-externo\n' > "$TMP/externo"
+rm -f -- "$CONFIG/kwinrc"
+ln -s -- "$TMP/externo" "$CONFIG/kwinrc"
+if bash "$SCRIPT" salvar symlink-test >/dev/null 2>&1; then
+  echo '[ERRO] Capturou arquivo de configuracao simbolico' >&2; exit 1
+fi
+if bash "$SCRIPT" aplicar original >/dev/null 2>&1; then
+  echo '[ERRO] Aplicou sobre arquivo de configuracao simbolico' >&2; exit 1
+fi
+grep -q conteudo-externo "$TMP/externo"
+echo '[OK] Perfis KDE: salvar, listar, simular, alternar, rollback, atualizar, recursos, legado e symlinks.'
+ literal; evita sobrescrita no mesmo segundo.
+if find "$STATE/.historico" -mindepth 1 -maxdepth 1 -name '*\$*' | grep -q .; then
+  echo '[ERRO] Nome de backup contem '
+[[ ! -e "$CONFIG/kwinrc" ]]
+grep -q '^Hidden=true$' "$CONFIG/autostart/com.bhyoo.krema.autostart.desktop"
+
+bash "$SCRIPT" aplicar sweet >/dev/null
+# dock=keep precisa conservar o override de autostart existente.
+grep -q '^Hidden=true$' "$CONFIG/autostart/com.bhyoo.krema.autostart.desktop"
+grep -q 'theme=Sweet' "$CONFIG/kdeglobals"
+grep -q 'layout=sweet' "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+grep -q 'someKWinEffect=true' "$CONFIG/kwinrc"
+[[ -f "$XDG_DATA_HOME/color-schemes/sweet.colors" ]]
+output="$(bash "$SCRIPT" status)"
+grep -q 'sweet' <<< "$output"
+
+printf 'layout=sweet-atualizado\n' > "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+bash "$SCRIPT" atualizar sweet --dock keep >/dev/null
+grep -q 'layout=sweet-atualizado' "$STATE/sweet/config/plasma-org.kde.plasma.desktop-appletsrc"
+find "$STATE/.historico" -maxdepth 1 -type d -name 'sweet-*' | grep -q sweet
+
+printf 'layout=antes-da-falha\n' > "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+export FAIL_FIRST_START="$TMP/falha"
+if bash "$SCRIPT" aplicar original > "$TMP/falha.log" 2>&1; then
+  echo '[ERRO] Deveria falhar quando Plasma nao reinicia' >&2; exit 1
+fi
+unset FAIL_FIRST_START
+grep -q 'layout=antes-da-falha' "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+printf 'layout=temporario\n' > "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+bash "$SCRIPT" restaurar-ultimo >/dev/null
+grep -q 'layout=antes-da-falha' "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+
+mkdir -p -- "$XDG_DATA_HOME/kubuntu-hybrid/perfis-alternancia/personalizada"
+printf 'layout=legado\n' > "$XDG_DATA_HOME/kubuntu-hybrid/perfis-alternancia/personalizada/plasma-org.kde.plasma.desktop-appletsrc"
+touch "$XDG_DATA_HOME/kubuntu-hybrid/perfis-alternancia/personalizada/.snapshot"
+bash "$SCRIPT" importar-legado personalizada >/dev/null
+output="$(bash "$SCRIPT" detalhes personalizada)"
+grep -q 'kind=legacy' <<< "$output"
+
+printf 'conteudo-externo\n' > "$TMP/externo"
+rm -f -- "$CONFIG/kwinrc"
+ln -s -- "$TMP/externo" "$CONFIG/kwinrc"
+if bash "$SCRIPT" salvar symlink-test >/dev/null 2>&1; then
+  echo '[ERRO] Capturou arquivo de configuracao simbolico' >&2; exit 1
+fi
+if bash "$SCRIPT" aplicar original >/dev/null 2>&1; then
+  echo '[ERRO] Aplicou sobre arquivo de configuracao simbolico' >&2; exit 1
+fi
+grep -q conteudo-externo "$TMP/externo"
+echo '[OK] Perfis KDE: salvar, listar, simular, alternar, rollback, atualizar, recursos, legado e symlinks.'
+ literal' >&2; exit 1
+fi
 grep -q 'layout=original' "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
 [[ ! -e "$CONFIG/kwinrc" ]]
 grep -q '^Hidden=true$' "$CONFIG/autostart/com.bhyoo.krema.autostart.desktop"
