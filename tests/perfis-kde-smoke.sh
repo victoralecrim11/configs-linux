@@ -81,6 +81,9 @@ if bash "$SCRIPT" aplicar original >"$TMP/falha.log" 2>&1; then
 fi
 unset FAIL_FIRST_START
 grep -q 'layout=antes-da-falha' "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+printf 'layout=temporario\n' > "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
+bash "$SCRIPT" restaurar-ultimo >/dev/null
+grep -q 'layout=antes-da-falha' "$CONFIG/plasma-org.kde.plasma.desktop-appletsrc"
 
 mkdir -p "$XDG_DATA_HOME/kubuntu-hybrid/perfis-alternancia/personalizada"
 printf 'layout=legado\n' > "$XDG_DATA_HOME/kubuntu-hybrid/perfis-alternancia/personalizada/plasma-org.kde.plasma.desktop-appletsrc"
