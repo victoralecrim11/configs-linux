@@ -166,7 +166,7 @@ copy_resources() {
     if [[ -d "$dir/resources/$rel" ]]; then
       mkdir -p -- "$DATA_DIR/$rel"
       # Nunca apaga, nem sobrescreve recursos ja instalados.
-      cp -an -- "$dir/resources/$rel/." "$DATA_DIR/$rel/" ||
+      cp -a --update=none -- "$dir/resources/$rel/." "$DATA_DIR/$rel/" ||
         die "Erro ao recuperar recursos de aparencia: $rel"
     fi
   done
