@@ -1,4 +1,4 @@
-name: Linux Hybrid v2 - testes Bash
+name: Linux Hybrid - smoke tests
 on:
   push:
   pull_request:
@@ -7,5 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validar sintaxe, perfis, distro e modo seguro
+      - name: Validar instalador multidistro (sem alterar sistema)
         run: bash tests/smoke.sh
+      - name: Validar perfis KDE (ambiente isolado)
+        run: bash tests/perfis-kde-smoke.sh
