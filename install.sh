@@ -8,6 +8,8 @@ PROJECT_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 source "$PROJECT_ROOT/lib/platform.sh"
 # shellcheck source=lib/core.sh
 source "$PROJECT_ROOT/lib/core.sh"
+# shellcheck source=lib/install-status.sh
+source "$PROJECT_ROOT/lib/install-status.sh"
 # shellcheck source=lib/krema.sh
 source "$PROJECT_ROOT/lib/krema.sh"
 # shellcheck source=lib/premium.sh
@@ -24,6 +26,8 @@ WITH_DOTNET=0
 WITH_VSCODE=0
 DETECT_ONLY=0
 CHECK_SESSION=0
+LIST_PROFILES=0
+VERIFY_PROFILE=""
 OS_RELEASE_FILE="/etc/os-release"
 
 help_text() {
@@ -36,6 +40,9 @@ Uso: bash install.sh [--profile premium|dev|full] [opcoes]
   --dry-run           Mostrar plano SEM modificar arquivos ou usar sudo
   --detect            Detectar a distro sem instalar
   --check-session     Diagnosticar acesso a KDE Wayland e sudo sem instalar
+  --status            Listar perfis de instalacao registrados e pacotes atuais
+  --list-profiles     Alias de --status (nao lista perfis visuais KDE)
+  --verify-profile N  Conferir pacotes atuais de premium, dev ou full
   --yes               Confirmar etapas de instalacao explicitamente
   --with-node         Incluir Node.js e npm dos repositorios da distro
   --with-docker       Incluir Docker (se nao houver podman-docker)
@@ -57,6 +64,10 @@ while (($#)); do
     --dry-run) DRY_RUN=1; shift ;;
     --detect) DETECT_ONLY=1; shift ;;
     --check-session) CHECK_SESSION=1; shift ;;
+    --status|--list-profiles) LIST_PROFILES=1; shift ;;
+    --verify-profile)
+      (($#>=2)) || die "Falta perfil para --verify-profile."
+      VERIFY_PROFILE="$2"; shift 2 ;;
     --yes) YES=1; shift ;;
     --with-node) WITH_NODE=1; shift ;;
     --with-docker) WITH_DOCKER=1; shift ;;
@@ -80,6 +91,17 @@ info "ID/versao: ${DISTRO_ID:-?} / ${DISTRO_VERSION:-?}"
 info "Familia: ${DISTRO_FAMILY:-desconhecida}"
 info "Backend: ${DISTRO_BACKEND:-nao homologado}"
 if (( DETECT_ONLY )); then exit 0; fi
+if (( LIST_PROFILES )); then
+  install_status_display
+  exit 0
+fi
+if [[ -n "$VERIFY_PROFILE" ]]; then
+  case "$VERIFY_PROFILE" in premium|dev|full) ;; *) die "Perfil invalido em --verify-profile." ;; esac
+  record_file="$(install_status_root)/$VERIFY_PROFILE.state"
+  prior_extras="$(install_status_read "$record_file" extras)"
+  install_status_verify "$VERIFY_PROFILE" "${prior_extras:-none}"
+  exit $?
+fi
 if (( CHECK_SESSION )); then
   print_graphical_diagnostics
   if kde_wayland_session_ok; then
@@ -142,11 +164,67 @@ sudo -v || die "Nao foi possivel obter permissao administrativa."
 umask 077
 prepare_state
 backup_kde
+
+# Registra etapas separadamente. Um "full" so e concluido quando os dois
+# componentes (dev e premium) foram realmente executados e verificados.
+REQUESTED_INSTALL="$PROFILE"
+ACTIVE_STEP=""
+REQUESTED_EXTRAS="$(install_status_requested_extras)"
+install_failure_record() {
+  local code="$1"
+  if (( code != 0 )) && [[ -n "$ACTIVE_STEP" ]]; then
+    install_status_write "$ACTIVE_STEP" falhou \
+      "$([[ "$ACTIVE_STEP" == dev ]] && printf '%s' "$REQUESTED_EXTRAS" || printf '%s' none)" \
+      instalador "Etapa interrompida; consulte o log $LOG_FILE" ||
+      warn "Nao foi possivel registrar falha da etapa $ACTIVE_STEP."
+    if [[ "$REQUESTED_INSTALL" == full ]]; then
+      install_status_write full falhou "$REQUESTED_EXTRAS" instalador \
+        "Instalacao interrompida; consulte o log $LOG_FILE" ||
+        warn "Nao foi possivel registrar a falha do Full."
+    fi
+  fi
+}
+trap 'install_failure_record "$?"' EXIT
+
+run_install_step() {
+  local step="$1" extras="none" status
+  ACTIVE_STEP="$step"
+  if [[ "$step" == dev ]]; then
+    extras="$REQUESTED_EXTRAS"
+    setup_developer
+  else
+    setup_premium
+  fi
+  if install_status_check "$step" "$extras"; then
+    status=concluido
+    info "Verificacao $step: $INSTALL_STATUS_PRESENT/$INSTALL_STATUS_TOTAL pacotes presentes."
+  else
+    status=parcial
+    warn "Verificacao $step: ausentes $INSTALL_STATUS_MISSING."
+  fi
+  install_status_write "$step" "$status" "$extras" instalador "$INSTALL_STATUS_MISSING" ||
+    die "Nao foi possivel registrar o status de $step."
+  ACTIVE_STEP=""
+  info "Status registrado: $step=$status."
+}
 if [[ "$PROFILE" == dev || "$PROFILE" == full ]]; then
-  setup_developer
+  run_install_step dev
 fi
 if [[ "$PROFILE" == premium || "$PROFILE" == full ]]; then
-  setup_premium
+  run_install_step premium
 fi
-info "Instalacao 2.0 concluida. Para alternar a barra: bash scripts/alternar-barra-kde.sh original|personalizada"
+if [[ "$PROFILE" == full ]]; then
+  if install_status_check full "$REQUESTED_EXTRAS"; then
+    full_status=concluido
+  else
+    full_status=parcial
+  fi
+  install_status_write full "$full_status" "$REQUESTED_EXTRAS" instalador \
+    "$INSTALL_STATUS_MISSING" ||
+    die "Falha ao registrar Full."
+  info "Status registrado: full=$full_status."
+fi
+trap - EXIT
+info "Etapas finalizadas. Consulte: bash install.sh --status"
+info "Para alternar a barra: bash scripts/perfis-kde.sh listar"
 info "Faca logout/login caso o Plasma ou a Krema ainda nao reflitam as novas configuracoes."
