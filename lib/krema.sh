@@ -5,8 +5,7 @@ install_krema() {
     info "Krema ja instalado; instalacao ignorada."
     return 0
   fi
-  [[ "${XDG_SESSION_TYPE:-}" == "wayland" ]] ||
-    die "O Krema requer sessao KDE Wayland. Entre com Wayland para o perfil Premium."
+  require_kde_wayland_session
   confirm "Adicionar o repositorio de terceiros do Krema para $DISTRO_NAME?" ||
     die "Instalacao do Krema nao autorizada."
 
