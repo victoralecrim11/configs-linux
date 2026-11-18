@@ -23,6 +23,7 @@ WITH_DOCKER=0
 WITH_DOTNET=0
 WITH_VSCODE=0
 DETECT_ONLY=0
+CHECK_SESSION=0
 OS_RELEASE_FILE="/etc/os-release"
 
 help_text() {
@@ -34,6 +35,7 @@ Uso: bash install.sh [--profile premium|dev|full] [opcoes]
   --profile full      Premium + Dev
   --dry-run           Mostrar plano SEM modificar arquivos ou usar sudo
   --detect            Detectar a distro sem instalar
+  --check-session     Diagnosticar acesso a KDE Wayland e sudo sem instalar
   --yes               Confirmar etapas de instalacao explicitamente
   --with-node         Incluir Node.js e npm dos repositorios da distro
   --with-docker       Incluir Docker (se nao houver podman-docker)
@@ -54,6 +56,7 @@ while (($#)); do
     --profile) (($#>=2)) || die "Falta perfil."; PROFILE="$2"; shift 2 ;;
     --dry-run) DRY_RUN=1; shift ;;
     --detect) DETECT_ONLY=1; shift ;;
+    --check-session) CHECK_SESSION=1; shift ;;
     --yes) YES=1; shift ;;
     --with-node) WITH_NODE=1; shift ;;
     --with-docker) WITH_DOCKER=1; shift ;;
@@ -77,6 +80,15 @@ info "ID/versao: ${DISTRO_ID:-?} / ${DISTRO_VERSION:-?}"
 info "Familia: ${DISTRO_FAMILY:-desconhecida}"
 info "Backend: ${DISTRO_BACKEND:-nao homologado}"
 if (( DETECT_ONLY )); then exit 0; fi
+if (( CHECK_SESSION )); then
+  print_graphical_diagnostics
+  if kde_wayland_session_ok; then
+    info "Sessao KDE Plasma Wayland acessivel para o instalador."
+    exit 0
+  fi
+  warn "A instalacao Premium nao deve continuar neste shell."
+  exit 1
+fi
 (( PLATFORM_OK )) ||
   die "Distribuicao/versao nao homologada. Apenas Ubuntu 26.04 e Debian 13 sao permitidos na v2."
 
@@ -121,8 +133,7 @@ require_cmd dpkg-query
 require_cmd apt-cache
 require_cmd tee
 if [[ "$PROFILE" != dev ]]; then
-  [[ "${XDG_SESSION_TYPE:-}" == "wayland" ]] ||
-    die "O perfil Premium requer sessao KDE Plasma Wayland."
+  require_kde_wayland_session
 fi
 confirm "Instalar o perfil $PROFILE no sistema $DISTRO_NAME?" ||
   die "Instalacao cancelada pelo usuario."
