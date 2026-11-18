@@ -6,6 +6,18 @@ for script in "$ROOT/install.sh" "$ROOT"/lib/*.sh "$ROOT"/scripts/*.sh; do
   bash -n "$script"
 done
 echo "[OK] sintaxe Bash"
+# Shell sem variaveis da sessao grafica (ex.: su - victor) deve receber
+# diagnostico, sem instalar pacotes, exigir sudo ou falsificar Wayland.
+if out="$(env -u XDG_SESSION_TYPE -u XDG_CURRENT_DESKTOP \
+  -u WAYLAND_DISPLAY -u XDG_RUNTIME_DIR \
+  bash "$ROOT/install.sh" --check-session 2>&1)"; then
+  echo "[ERRO] --check-session aceitou shell sem sessao KDE Wayland." >&2
+  exit 1
+fi
+grep -q 'XDG_SESSION_TYPE=<ausente>' <<< "$out"
+grep -q 'Socket Wayland: ausente ou inacessivel' <<< "$out"
+grep -q 'A instalacao Premium nao deve continuar' <<< "$out"
+echo "[OK] diagnostico sem sessao Wayland e sem sudo"
 out="$(bash "$ROOT/install.sh" --dry-run --profile premium --os-release "$ROOT/tests/fixtures/ubuntu-26.04.os-release")"
 grep -q 'Backend: ubuntu' <<< "$out"
 grep -q 'PPA isac322/krema' <<< "$out"
