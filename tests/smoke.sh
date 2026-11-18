@@ -6,6 +6,26 @@ for script in "$ROOT/install.sh" "$ROOT"/lib/*.sh "$ROOT"/scripts/*.sh; do
   bash -n "$script"
 done
 echo "[OK] sintaxe Bash"
+# Regressao Debian 13: fonte OBS nao pode ser criada como 0600.
+# A instalacao usa umask 077; escrever com "sudo tee" deixava APT ilegivel
+# para o usuario e fazia o pacote Krema parecer indisponivel.
+python3 - "$ROOT/lib/krema.sh" <<'PY'
+from pathlib import Path
+import sys
+source = Path(sys.argv[1]).read_text()
+checks = {
+  "reparar arquivo existente": 'sudo chmod 0644 "$source_file"',
+  "criar fonte APT com permissao adequada": 'sudo install -m 0644 "$tmpdir/krema-obs.list" "$source_file"',
+  "bloquear fonte que continua inacessivel": 'die "Fonte OBS inacessivel para o usuario: $source_file"',
+  "evitar sobrescrever fontes inesperadas": 'Conteudo inesperado em $source_file',
+}
+for desc, expected in checks.items():
+  if expected not in source:
+    raise SystemExit(f"Falha de regressao Krema OBS: {desc}")
+if "sudo tee /etc/apt/sources.list.d/krema-obs.list" in source:
+  raise SystemExit("Regressao Krema OBS: sudo tee cria arquivo 0600 sob umask 077")
+PY
+echo "[OK] OBS Krema com permissao APT 0644 e reparo idempotente"
 # Shell sem variaveis da sessao grafica (ex.: su - victor) deve receber
 # diagnostico, sem instalar pacotes, exigir sudo ou falsificar Wayland.
 if out="$(env -u XDG_SESSION_TYPE -u XDG_CURRENT_DESKTOP \
