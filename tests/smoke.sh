@@ -18,6 +18,28 @@ grep -q 'XDG_SESSION_TYPE=<ausente>' <<< "$out"
 grep -q 'Socket Wayland: ausente ou inacessivel' <<< "$out"
 grep -q 'A instalacao Premium nao deve continuar' <<< "$out"
 echo "[OK] diagnostico sem sessao Wayland e sem sudo"
+# Caminho positivo: um socket Unix simulado representa um Wayland disponivel
+# para o teste. Nenhuma aplicacao grafica e iniciada.
+python3 - "$ROOT" <<'PY'
+import os, socket, subprocess, sys, tempfile
+root = sys.argv[1]
+with tempfile.TemporaryDirectory() as d:
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    try:
+        sock.bind(os.path.join(d, "wayland-test"))
+        env = dict(os.environ)
+        env.update(XDG_SESSION_TYPE="wayland", XDG_CURRENT_DESKTOP="KDE",
+                   WAYLAND_DISPLAY="wayland-test", XDG_RUNTIME_DIR=d)
+        proc = subprocess.run(["bash", os.path.join(root, "install.sh"), "--check-session"],
+                              env=env, text=True, stdout=subprocess.PIPE,
+                              stderr=subprocess.STDOUT, timeout=15)
+        if proc.returncode != 0 or "Sessao KDE Plasma Wayland acessivel" not in proc.stdout:
+            print(proc.stdout, file=sys.stderr)
+            raise SystemExit("Teste de sessao Wayland valida falhou.")
+    finally:
+        sock.close()
+PY
+echo "[OK] sessao KDE Wayland com socket valido reconhecida"
 out="$(bash "$ROOT/install.sh" --dry-run --profile premium --os-release "$ROOT/tests/fixtures/ubuntu-26.04.os-release")"
 grep -q 'Backend: ubuntu' <<< "$out"
 grep -q 'PPA isac322/krema' <<< "$out"
