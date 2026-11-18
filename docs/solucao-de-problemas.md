@@ -2,113 +2,113 @@
 
 Diagnóstico de privilégios, Wayland, repositórios APT, Krema e recuperação de painéis. Faça backup antes de qualquer mudança.
 
-## Erros de permissão administrativa (\`sudo\` / \`sudoers\`)
+## Erros de permissão administrativa (`sudo` / `sudoers`)
 
 ### Sintomas e diagnóstico inicial
 
-Estes procedimentos são para Debian 13 e Ubuntu/Kubuntu com \`sudo\`. O instalador \`install.sh\` deve ser executado como **usuário normal**; não use \`sudo bash install.sh\`.
+Estes procedimentos são para Debian 13 e Ubuntu/Kubuntu com `sudo`. O instalador `install.sh` deve ser executado como **usuário normal**; não use `sudo bash install.sh`.
 
 | Mensagem ou situação | Causa provável | Verificação |
 | --- | --- | --- |
-| \`victor is not in the sudoers file\` | Grupo \`sudo\` ausente **na sessão atual** ou regra do \`sudoers\` desabilitada | \`id -nG\`, \`id victor\`, \`visudo -c\` |
-| \`groups victor\` mostra \`sudo\`, mas \`groups\` não | Associação ao grupo atualizada no sistema, porém processos antigos mantêm a lista anterior | Compare \`id -nG\` e \`id victor\` |
-| \`su -\` funciona, mas \`sudo su\` falha | \`su -\` autentica como root; \`sudo\` exige autorização do usuário atual | \`sudo whoami\` |
-| \`sudo\` pede senha e retorna \`Sorry, try again\` | Senha do usuário incorreta, diferente da senha do root | Digite a senha de login do próprio usuário |
-| \`sudo whoami\` funciona, mas o Premium acusa Wayland | Contexto gráfico não disponível naquele terminal, por exemplo após \`su - victor\` | \`bash install.sh --check-session\` |
+| `victor is not in the sudoers file` | Grupo `sudo` ausente **na sessão atual** ou regra do `sudoers` desabilitada | `id -nG`, `id victor`, `visudo -c` |
+| `groups victor` mostra `sudo`, mas `groups` não | Associação ao grupo atualizada no sistema, porém processos antigos mantêm a lista anterior | Compare `id -nG` e `id victor` |
+| `su -` funciona, mas `sudo su` falha | `su -` autentica como root; `sudo` exige autorização do usuário atual | `sudo whoami` |
+| `sudo` pede senha e retorna `Sorry, try again` | Senha do usuário incorreta, diferente da senha do root | Digite a senha de login do próprio usuário |
+| `sudo whoami` funciona, mas o Premium acusa Wayland | Contexto gráfico não disponível naquele terminal, por exemplo após `su - victor` | `bash install.sh --check-session` |
 
 Primeiro, **sem usar root**, execute no Konsole:
 
-\`\`\`bash
+```bash
 whoami
 id -nG                    # Grupos efetivos deste terminal
 id "$USER"                # Grupos cadastrados para o usuario
 getent group sudo         # Membros cadastrados do grupo sudo
 sudo -k
 sudo whoami
-\`\`\`
+```
 
-O resultado esperado do último comando é \`root\`. O \`sudo\` normalmente solicita **a senha de login do usuário**, não a senha do root.
+O resultado esperado do último comando é `root`. O `sudo` normalmente solicita **a senha de login do usuário**, não a senha do root.
 
 ### Caso 1 — Usuário não cadastrado no grupo sudo
 
-Se \`id "$USER"\` **não** mostrar \`sudo\`, e você souber a senha do administrador root, entre como root:
+Se `id "$USER"` **não** mostrar `sudo`, e você souber a senha do administrador root, entre como root:
 
-\`\`\`bash
+```bash
 su -
-\`\`\`
+```
 
-Já no prompt \`root@...\`, execute (substitua \`victor\` pelo usuário correto, se necessário):
+Já no prompt `root@...`, execute (substitua `victor` pelo usuário correto, se necessário):
 
-\`\`\`bash
+```bash
 apt update
 apt install -y sudo
 usermod -aG sudo victor
 id victor
 exit
-\`\`\`
+```
 
-**Não use \`usermod -G sudo victor\` sem \`-a\`**: isso pode remover outras associações de grupo. Reinicie o computador completamente depois de alterar os grupos e abra um Konsole normal pelo KDE.
+**Não use `usermod -G sudo victor` sem `-a`**: isso pode remover outras associações de grupo. Reinicie o computador completamente depois de alterar os grupos e abra um Konsole normal pelo KDE.
 
 Se você não sabe a senha do root e não tem outra conta administradora, esses passos não poderão ser executados por um usuário sem privilégios. Use os meios autorizados de recuperação administrativa do Debian ou peça acesso ao responsável pelo computador.
 
 ### Caso 2 — Grupo sudo cadastrado, mas não ativo na sessão
 
-Se \`id victor\` inclui \`sudo\`, porém \`id -nG\` **não**, as credenciais do terminal ou do \`systemd --user\` podem ter sido iniciadas antes da mudança de grupo. **Editar \`/etc/sudoers\` não corrige esse problema.**
+Se `id victor` inclui `sudo`, porém `id -nG` **não**, as credenciais do terminal ou do `systemd --user` podem ter sido iniciadas antes da mudança de grupo. **Editar `/etc/sudoers` não corrige esse problema.**
 
 A correção definitiva é **reiniciar o Debian**, não apenas encerrar a sessão gráfica. Depois do reinício, abra o Konsole pelo menu do Plasma e execute:
 
-\`\`\`bash
+```bash
 id -nG
 sudo whoami
-\`\`\`
+```
 
 Como solução temporária, no Konsole de uma sessão já aberta:
 
-\`\`\`bash
+```bash
 newgrp sudo
 id -nG
 sudo -k
 sudo whoami
-\`\`\`
+```
 
-\`newgrp sudo\` cria um novo shell com o grupo atualizado; os comandos seguintes precisam ser executados **nesse mesmo shell**. Ele não atualiza os processos KDE que já estavam em execução. Se solicitar senha do grupo ou falhar, use a reinicialização completa.
+`newgrp sudo` cria um novo shell com o grupo atualizado; os comandos seguintes precisam ser executados **nesse mesmo shell**. Ele não atualiza os processos KDE que já estavam em execução. Se solicitar senha do grupo ou falhar, use a reinicialização completa.
 
 ### Caso 3 — Verificar o arquivo sudoers (somente se necessário)
 
-Se **tanto** \`id -nG\` quanto \`id victor\` incluem \`sudo\`, mas \`sudo whoami\` ainda informa que o usuário não está no sudoers, entre como root com \`su -\` e execute:
+Se **tanto** `id -nG` quanto `id victor` incluem `sudo`, mas `sudo whoami` ainda informa que o usuário não está no sudoers, entre como root com `su -` e execute:
 
-\`\`\`bash
+```bash
 visudo -c
 visudo
-\`\`\`
+```
 
-Dentro do \`visudo\`, procure esta regra:
+Dentro do `visudo`, procure esta regra:
 
-\`\`\`text
+```text
 %sudo ALL=(ALL:ALL) ALL
-\`\`\`
+```
 
-Ela deve existir **sem \`#\` no início**. Se já estiver correta, não a duplique. No editor Nano, use \`Ctrl+W\` para procurar, \`Ctrl+O\` e Enter para salvar, e \`Ctrl+X\` para sair. O \`visudo\` valida a sintaxe e evita edições simultâneas. Confira novamente com \`visudo -c\`; não edite \`/etc/sudoers\` diretamente com um editor comum.
+Ela deve existir **sem `#` no início**. Se já estiver correta, não a duplique. No editor Nano, use `Ctrl+W` para procurar, `Ctrl+O` e Enter para salvar, e `Ctrl+X` para sair. O `visudo` valida a sintaxe e evita edições simultâneas. Confira novamente com `visudo -c`; não edite `/etc/sudoers` diretamente com um editor comum.
 
-Se a regra está correta e o problema persiste, verifique se há outras regras ou restrições específicas antes de adicionar permissões extras. **Não use \`NOPASSWD: ALL\`, \`chmod 777\` nem regras irrestritas adicionais** como tentativa de resolver a falha.
+Se a regra está correta e o problema persiste, verifique se há outras regras ou restrições específicas antes de adicionar permissões extras. **Não use `NOPASSWD: ALL`, `chmod 777` nem regras irrestritas adicionais** como tentativa de resolver a falha.
 
 ### Caso 4 — sudo funciona, mas o instalador diz que falta Wayland
 
-Um shell criado por \`su - victor\` pode ter o grupo \`sudo\` correto, porém perder as variáveis da sessão gráfica. Para o Premium/Full, use um **Konsole aberto diretamente pelo KDE**; nunca execute a instalação visual como root ou defina \`XDG_SESSION_TYPE=wayland\` manualmente.
+Um shell criado por `su - victor` pode ter o grupo `sudo` correto, porém perder as variáveis da sessão gráfica. Para o Premium/Full, use um **Konsole aberto diretamente pelo KDE**; nunca execute a instalação visual como root ou defina `XDG_SESSION_TYPE=wayland` manualmente.
 
-\`\`\`bash
+```bash
 cd ~/configs-linux
 bash install.sh --check-session
 sudo whoami
 bash install.sh --profile premium --dry-run
-\`\`\`
+```
 
-Se o diagnóstico reconhecer KDE/Wayland e \`sudo whoami\` retornar \`root\`, execute o perfil desejado normalmente:
+Se o diagnóstico reconhecer KDE/Wayland e `sudo whoami` retornar `root`, execute o perfil desejado normalmente:
 
-\`\`\`bash
+```bash
 bash install.sh --profile premium
 # ou: bash install.sh --profile full
-\`\`\`
+```
 
 **Os dois diagnósticos são independentes:** autorização administrativa do processo e acesso real à sessão KDE Wayland. Para outras causas, consulte as seções seguintes.
 
