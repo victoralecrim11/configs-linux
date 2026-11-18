@@ -86,4 +86,5 @@ if bash "$ROOT/install.sh" --profile dev --yes --os-release "$ROOT/tests/fixture
   echo "[ERRO] override de OS permitido em instalacao real." >&2; exit 1
 fi
 echo "[OK] override de distro permitido somente em simulacao"
+bash "$ROOT/tests/install-status-smoke.sh"
 echo "Todos os testes de smoke passaram. Nenhuma instalacao foi executada."
