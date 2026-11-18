@@ -214,10 +214,33 @@ cd configs-linux
 
 Se você já clonou o projeto, **não clone novamente**: use `cd ~/configs-linux`. Se seu clone antigo ainda está em `~/configs-linux-kubunutu`, pode continuar usando essa pasta; o nome local não precisa mudar.
 
+### Verificar sessão gráfica e permissões antes de instalar
+
+O perfil Premium precisa rodar **diretamente no Konsole aberto pela sessão KDE Plasma/Wayland**, como usuário comum. Abrir `su - victor` dentro do terminal pode atualizar os grupos (inclusive `sudo`), mas não cria uma sessão gráfica e pode eliminar variáveis como `XDG_SESSION_TYPE` e `WAYLAND_DISPLAY`.
+
+```bash
+cd ~/configs-linux
+
+# Leitura de dados, sem sudo e sem instalar nada
+bash ./install.sh --check-session
+
+# Comandos de apoio
+id -nG
+sudo whoami
+echo "$XDG_SESSION_TYPE"
+echo "$XDG_CURRENT_DESKTOP"
+echo "$WAYLAND_DISPLAY"
+```
+
+O diagnóstico deve reconhecer KDE, `wayland` e um socket Wayland acessível. Se `sudo whoami` retornar `root`, a permissão já funciona; não é preciso continuar modificando `/etc/sudoers`. Se o diagnóstico apontar variáveis ausentes ou sessão `tty`, feche o Konsole e abra um terminal **diretamente pelo menu do Plasma**, em uma sessão iniciada pelo SDDM. Se necessário, reinicie e escolha **Plasma (Wayland)** na tela de login.
+
+Não contorne a checagem com `export XDG_SESSION_TYPE=wayland`: definir a variável não cria o socket nem oferece acesso ao Plasma. Nunca execute a configuração visual com `sudo bash install.sh`, `su -` ou `sudo su`.
+
 ### Diagnóstico, simulação e backup inicial
 
 ```bash
 bash install.sh --detect
+bash install.sh --check-session
 bash install.sh --profile full --dry-run
 bash scripts/alternar-barra-kde.sh salvar-original
 ```
