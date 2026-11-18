@@ -236,6 +236,32 @@ O diagnóstico deve reconhecer KDE, `wayland` e um socket Wayland acessível. Se
 
 Não contorne a checagem com `export XDG_SESSION_TYPE=wayland`: definir a variável não cria o socket nem oferece acesso ao Plasma. Nunca execute a configuração visual com `sudo bash install.sh`, `su -` ou `sudo su`.
 
+### Solução para Krema ausente no Debian 13 (OBS)
+
+O instalador Premium adiciona um repositório de terceiros (openSUSE Build Service) para instalar o Krema. Em versões anteriores, a fonte `/etc/apt/sources.list.d/krema-obs.list` podia ser criada com permissão `0600` devido ao `umask 077` do instalador. Isso impedia que o APT consultado pelo usuário normal encontrasse o pacote, embora o índice já tivesse sido baixado.
+
+O instalador atualizado **corrige automaticamente a permissão para `0644` ao detectar a fonte existente** e cria novas fontes usando `install -m 0644`.
+
+Para reparar sem repetir toda a instalação visual, em um Konsole aberto como usuário normal, após atualizar o clone:
+
+```bash
+cd ~/configs-linux
+git pull --ff-only
+
+# Corrige apenas a legibilidade da fonte OBS já existente
+sudo chmod 0644 /etc/apt/sources.list.d/krema-obs.list
+
+# Atualiza os índices e confirma a versão disponível
+sudo apt-get update
+apt-cache policy krema
+
+# Instala apenas a dock (não reaplica wallpaper nem painel)
+sudo apt-get install krema
+command -v krema
+```
+
+Confirme que `apt-cache policy krema` mostra uma versão candidata antes de instalar. Se a fonte ainda não existir ou o APT relatar erro de assinatura/chave, **não crie outra fonte manualmente**: use `bash ./install.sh --profile premium` ou consulte os logs em `~/.local/state/linux-hybrid-v2/install-*.log`. Para aplicar também as configurações do Premium, rode novamente o instalador depois que a Krema estiver instalada; ele preserva backups, mas **pode alterar painel, tema e wallpaper**.
+
 ### Diagnóstico, simulação e backup inicial
 
 ```bash
