@@ -32,7 +32,7 @@ Uso:
   bash scripts/perfis-kde.sh historico NOME
   bash scripts/perfis-kde.sh restaurar-versao NOME ID_VERSAO
   bash scripts/perfis-kde.sh comparar NOME
-  bash scripts/perfis-kde.sh listar|status|detalhes NOME
+  bash scripts/perfis-kde.sh listar|atual|status|detalhes NOME
   bash scripts/perfis-kde.sh aplicar NOME [--dock on|off|keep] [--dry-run]
   bash scripts/perfis-kde.sh dock on|off
   bash scripts/perfis-kde.sh restaurar-ultimo
@@ -320,6 +320,27 @@ list_profiles() {
   done
   (( found )) || msg "Nenhum perfil visual salvo."
 }
+current_profile() {
+  local name="nenhum" saved_dock="" actual_dock=""
+  if [[ -f "$ACTIVE" && ! -L "$ACTIVE" ]]; then
+    name="$(head -n 1 "$ACTIVE")"
+    if ! valid_name "$name" || [[ ! -f "$ROOT/$name/.snapshot" ]]; then
+      msg "Perfil registrado invalido ou indisponivel: $name"
+      return 1
+    fi
+  fi
+  msg "Ultimo perfil visual ativado: $name"
+  actual_dock="$(dock_detect)"
+  msg "Dock Krema agora: $actual_dock"
+  if [[ "$name" != nenhum ]]; then
+    saved_dock="$(read_metadata "$ROOT/$name/info" dock)"
+    msg "Dock prevista pelo perfil: $saved_dock"
+    if [[ "$saved_dock" != keep && "$saved_dock" != "$actual_dock" ]]; then
+      msg "AVISO: estado atual da dock difere do perfil salvo."
+    fi
+  fi
+  msg "Nota: esse registro indica a ultima ativacao, nao valida todas as mudancas manuais posteriores."
+}
 status() {
   local active="nenhum"
   [[ ! -f "$ACTIVE" ]] || active="$(cat "$ACTIVE")"
@@ -555,7 +576,21 @@ apply_profile() {
   fi
   panel_for_dock "$dock"
   dock_switch "$dock" "$dir"
+  # Perfis especiais podem manter a Krema sempre visivel como na referencia visual.
+  # O comportamento padrao (auto-hide) dos demais perfis permanece inalterado.
+  if [[ "$dock" == on && "$(read_metadata "$dir/info" dock_visibility)" == always ]]; then
+    kwriteconfig6 --file kremarc --group General --key VisibilityMode --type int 0
+    kwriteconfig6 --file kremarc --group General --key ReserveScreenSpace --type bool true
+    pkill -x -u "$(id -u)" krema 2>/dev/null || true
+    (nohup krema >/dev/null 2>&1 </dev/null &)
+    msg "Krema: visivel permanentemente conforme perfil salvo."
+  fi
   printf '%s\n' "$name" > "$ACTIVE"
+  # Atalhos comuns aos visuais, sem depender de snapshot feito em outra maquina.
+  if [[ -f "$CONFIG_DIR/kglobalshortcutsrc" && -f "$(dirname "${BASH_SOURCE[0]}")/atalhos-windows-kde.sh" ]]; then
+    bash "$(dirname "${BASH_SOURCE[0]}")/atalhos-windows-kde.sh" --apply ||
+      msg "AVISO: confira atalhos globais em Configuracoes > Atalhos."
+  fi
   msg "Perfil '$name' aplicado. Saia e entre na sessao caso temas/efeitos nao atualizem."
 }
 restore_latest() {
@@ -600,6 +635,7 @@ import_legacy() {
 case "${1:---help}" in
   --help|-h|ajuda) usage ;;
   listar) list_profiles ;;
+  atual) [[ "$#" == 1 ]] || die "Uso: atual"; current_profile ;;
   status) status ;;
   detalhes)
     [[ "$#" == 2 ]] || die "Uso: detalhes NOME"
