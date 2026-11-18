@@ -33,10 +33,7 @@ SVG
 setup_premium() {
   local alternar="$PROJECT_ROOT/scripts/alternar-barra-kde.sh"
   local perfil="$PROJECT_ROOT/scripts/perfil-barra-atual-kde.sh"
-  [[ "${XDG_SESSION_TYPE:-}" == "wayland" ]] ||
-    die "Premium requer KDE Wayland para a Krema."
-  [[ "${XDG_CURRENT_DESKTOP:-}" == *KDE* || "${XDG_CURRENT_DESKTOP:-}" == *Plasma* ]] ||
-    die "Premium requer sessao KDE Plasma."
+  require_kde_wayland_session
   require_cmd plasmashell
   require_cmd kwriteconfig6
   [[ -s "${XDG_CONFIG_HOME:-$HOME/.config}/plasma-org.kde.plasma.desktop-appletsrc" ]] ||
