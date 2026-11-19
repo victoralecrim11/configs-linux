@@ -18,6 +18,8 @@ source "$PROJECT_ROOT/lib/premium.sh"
 source "$PROJECT_ROOT/lib/full-visual.sh"
 # shellcheck source=lib/dev.sh
 source "$PROJECT_ROOT/lib/dev.sh"
+# shellcheck source=lib/common-desktop.sh
+source "$PROJECT_ROOT/lib/common-desktop.sh"
 
 DRY_RUN=0
 YES=0
@@ -146,6 +148,7 @@ if (( DRY_RUN )); then
     [[ "$WITH_DOTNET" -eq 0 || "$DISTRO_BACKEND" != debian ]] ||
       info "Dotnet no Debian: pacote oficial packages-microsoft-prod.deb"
   fi
+  info "Comum a todos: fontes Fira Code, JetBrains Mono e Inter + atalhos Windows KDE."
   info "Durante instalacao real: confirmacao, backup local, simulacao APT e bloqueio de remocoes."
   exit 0
 fi
@@ -215,6 +218,7 @@ fi
 if [[ "$PROFILE" == premium || "$PROFILE" == full ]]; then
   run_install_step premium
 fi
+setup_common_desktop
 if [[ "$PROFILE" == full ]]; then
   setup_full_visual
   if install_status_check full "$REQUESTED_EXTRAS"; then
