@@ -586,6 +586,12 @@ apply_profile() {
     msg "Krema: visivel permanentemente conforme perfil salvo."
   fi
   printf '%s\n' "$name" > "$ACTIVE"
+  # Apos restaurar kremarc do snapshot, fixar o clique para minimizar em
+  # qualquer perfil visual, inclusive quando a dock estiver desligada.
+  if [[ -f "$(dirname "${BASH_SOURCE[0]}")/configurar-clique-krema.sh" ]]; then
+    bash "$(dirname "${BASH_SOURCE[0]}")/configurar-clique-krema.sh" --apply ||
+      msg "AVISO: nao foi possivel configurar o clique de minimizar na Krema."
+  fi
   # Atalhos comuns aos visuais, sem depender de snapshot feito em outra maquina.
   if [[ -f "$CONFIG_DIR/kglobalshortcutsrc" && -f "$(dirname "${BASH_SOURCE[0]}")/atalhos-windows-kde.sh" ]]; then
     bash "$(dirname "${BASH_SOURCE[0]}")/atalhos-windows-kde.sh" --apply ||
