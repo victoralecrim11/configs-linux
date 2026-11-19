@@ -204,3 +204,24 @@ no diretório do usuário se não houve acesso administrativo; ao executar
 qualquer perfil de instalação, o APT instala os três pacotes globalmente.
 Os atalhos de lançadores no Plasma 6 Wayland exigem confirmação visual
 em Configurações do Sistema → Atalhos, possivelmente após novo login.
+
+### Efeito Lâmpada Mágica no Premium / Full
+
+O perfil `premium` (incluído também no `full`) ativa o efeito **Magic Lamp**
+nativo do KWin ao minimizar janelas. O instalador grava
+`[Plugins] magiclampEnabled=true` em `~/.config/kwinrc`, desativa o efeito
+concorrente `squash`, cria backup e solicita carregamento ao KWin sem
+reiniciá-lo no Wayland.
+
+Para aplicar **apenas** o efeito, sem reinstalar o perfil:
+
+```bash
+cd ~/configs-linux
+bash scripts/efeito-lampada-magica.sh --apply
+bash scripts/efeito-lampada-magica.sh --status
+```
+
+Se o efeito não aparecer, confira **Configurações do Sistema → Efeitos da área
+de trabalho → Lâmpada Mágica** e faça logout/login. A disponibilidade do
+plugin depende da versão e dos pacotes do KWin; salvar a opção não garante
+que o efeito foi carregado na sessão.
