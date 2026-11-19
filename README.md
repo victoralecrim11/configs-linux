@@ -163,3 +163,21 @@ bash tests/sweet-barra-smoke.sh
 Esses testes não precisam de `sudo` e não devem modificar o KDE em execução. Uma instalação real pode alterar tema, painel e wallpaper; faça backup e use `--dry-run` primeiro.
 
 **Licenciamento:** consulte as licenças e condições dos programas, temas, ícones e componentes de terceiros instalados.
+
+
+### Visual do perfil Full (KDE Plasma)
+
+O instalador `bash install.sh --profile full` configura a decoração **Plastik**,
+localiza o wallpaper original **Nuvole** pelo metadata.json (inclusive no diretório padrão **/usr/share/wallpapers/Next/**) e ativa a ocultação
+automática do painel KDE. Se Nuvole não estiver disponível, preserva o
+papel de parede atual e avisa (não substitui por uma imagem diferente).
+A Krema e os demais perfis de instalação não são alterados.
+
+Para reaplicar **somente** esses ajustes, sem reinstalar os programas:
+
+```bash
+cd ~/configs-linux
+bash scripts/aplicar-visual-full.sh
+```
+
+O painel aparece ao tocar a borda em que está posicionado. Caso Nuvole não seja encontrado, instale-o pelo gerenciador de papéis de parede do KDE e execute novamente.
