@@ -14,6 +14,9 @@ setup_common_desktop() {
       kwriteconfig6 --file kdeglobals --group WM --key activeFont 'Inter,10,-1,5,75,0,0,0,0,0'
       info "Fontes KDE: Inter (interface) e JetBrains Mono (monoespacada); Fira Code instalada para editores."
     fi
+    # Comportamento da Krema independente do tema visual.
+    bash "$PROJECT_ROOT/scripts/configurar-clique-krema.sh" --apply ||
+      warn "Nao foi possivel configurar clique para minimizar na Krema."
     bash "$PROJECT_ROOT/scripts/atalhos-windows-kde.sh" --apply ||
       warn "Atalhos nao foram aplicados integralmente; veja Configuracoes > Atalhos."
   else
