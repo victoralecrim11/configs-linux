@@ -1,0 +1,157 @@
+#!/usr/bin/env bash
+# Catalogo portavel de receitas visuais; nao exporta snapshots pessoais.
+set -Eeuo pipefail
+ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+MANAGER="$ROOT/scripts/perfis-kde.sh"
+DEST="${XDG_DATA_HOME:-$HOME/.local/share}/linux-hybrid/profiles"
+CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/linux-hybrid/visual-assets"
+usage() {
+  cat <<'HELP'
+Catalogo de perfis visuais KDE 6
+  bash scripts/catalogo-visual-kde.sh listar
+  bash scripts/catalogo-visual-kde.sh instalar NOME [--dry-run]
+  bash scripts/catalogo-visual-kde.sh instalar-todos [--dry-run]
+Perfis: sweet-kde-videoyt, layan-minimalist-modern, breeze-escuro-dock, breeze-classico
+Instalar registra os perfis SEM APLICAR a aparencia. Perfis existentes sao preservados.
+Para ativar: bash scripts/perfis-kde.sh aplicar NOME
+O preset Sweet reproduz os componentes conhecidos, nao garante identidade pixel a pixel.
+HELP
+}
+profiles=(sweet-kde-videoyt layan-minimalist-modern breeze-escuro-dock breeze-classico)
+description() {
+  case "$1" in
+    sweet-kde-videoyt) echo "Sweet escuro, Candy Icons, Sweet-Dark, blur e Krema inferior (referencia YouTube; wallpaper original nao incluso)" ;;
+    layan-minimalist-modern) echo "Layan Dark, Kvantum, icones Tela, wallpaper Layan e dock Krema inferior (referencia visual)" ;;
+    breeze-escuro-dock) echo "Breeze Dark, icones Breeze, painel superior e Krema inferior" ;;
+    breeze-classico) echo "Breeze padrao, painel inferior e dock desligada" ;;
+    *) echo "Perfil desconhecido: $1" >&2; exit 2 ;;
+  esac
+}
+asset_copy() {
+  local repo="$1" branch="$2" target="$3" source="$CACHE/$1" url
+  case "$repo" in
+    Sweet-plasma6) url=https://github.com/EliverLara/Sweet.git ;;
+    Sweet-kde) url=https://github.com/EliverLara/Sweet-kde.git ;;
+    candy-icons) url=https://github.com/EliverLara/candy-icons.git ;;
+    *) return 2 ;;
+  esac
+  if [[ ! -d "$source/.git" ]]; then
+    mkdir -p "$CACHE"
+    git clone --quiet --depth=1 ${branch:+--branch "$branch"} "$url" "$source"
+  fi
+  [[ -d "$source" ]] || return 1
+  mkdir -p "$target"
+  tar -C "$source" --exclude=.git -cf - . | tar -C "$target" -xf -
+}
+install_sweet() {
+  local data="${XDG_DATA_HOME:-$HOME/.local/share}" k="$CACHE/Sweet-plasma6/kde"
+  command -v git >/dev/null || { echo "git necessario para instalar Sweet" >&2; exit 1; }
+  if [[ ! -d "$CACHE/Sweet-plasma6/.git" ]]; then
+    mkdir -p "$CACHE"
+    git clone --quiet --depth=1 --branch dark-plasma-6 https://github.com/EliverLara/Sweet.git "$CACHE/Sweet-plasma6"
+  fi
+  # Cache do clone e usado como fonte para copiar apenas os subdiretorios pertinentes.
+  mkdir -p "$data/plasma/desktoptheme/Sweet" "$data/plasma/look-and-feel/Sweet" \
+    "$data/color-schemes" "$data/aurorae/themes" "$data/icons"
+  asset_copy Sweet-kde "" "$data/plasma/desktoptheme/Sweet"
+  cp -a "$k/look-and-feel/." "$data/plasma/look-and-feel/Sweet/"
+  cp -n "$k/colorschemes/Sweet.colors" "$data/color-schemes/Sweet.colors"
+  cp -a -n "$k/aurorae/Sweet-Dark" "$data/aurorae/themes/"
+  cp -a -n "$k/cursors/Sweet-cursors" "$data/icons/"
+  asset_copy candy-icons "" "$data/icons/candy-icons"
+}
+install_layan() {
+  local source="$CACHE/Layan-kde"
+  command -v git >/dev/null || { echo "git necessario para instalar Layan" >&2; exit 1; }
+  if [[ ! -d "$source/.git" ]]; then
+    mkdir -p "$CACHE"
+    git clone --quiet --depth=1 https://github.com/vinceliuice/Layan-kde.git "$source"
+  fi
+  # Instalador upstream executado como usuario normal (sem sudo).
+  (cd "$source" && bash ./install.sh)
+}
+set_key() { kwriteconfig6 --file "$1" --group "$2" --key "$3" "$4"; }
+register_one() {
+  local name="$1" dry="$2" p config dock colors icons look decoration
+  description "$name" >/dev/null
+  p="$DEST/$name"
+  if [[ -f "$p/.snapshot" ]]; then
+    printf '[EXISTE] %s (preservado, nao sobrescrito)\n' "$name"
+    return 0
+  fi
+  case "$name" in
+    sweet-kde-videoyt) dock=on; colors=Sweet; icons=candy-icons; look=Sweet; decoration=__aurorae__svg__Sweet-Dark ;;
+    layan-minimalist-modern) dock=on; colors=Layan; icons=Tela-dark; look=com.github.vinceliuice.Layan; decoration=__aurorae__svg__Layan ;;
+    breeze-escuro-dock) dock=on; colors=BreezeDark; icons=breeze; look=org.kde.breezedark.desktop; decoration= ;;
+    breeze-classico) dock=off; colors=BreezeLight; icons=breeze; look=org.kde.breeze.desktop; decoration= ;;
+  esac
+  printf '[PLANO] %s (dock=%s): %s\n' "$name" "$dock" "$(description "$name")"
+  [[ "$dry" == 0 ]] || return 0
+  [[ "$EUID" -ne 0 ]] || { echo "Nao execute com sudo." >&2; exit 1; }
+  [[ "${XDG_CURRENT_DESKTOP:-}" == *KDE* || "${XDG_CURRENT_DESKTOP:-}" == *Plasma* ]] || {
+    echo "Registre os perfis dentro da sessao KDE." >&2; exit 1;
+  }
+  command -v kwriteconfig6 >/dev/null || { echo "kwriteconfig6 ausente" >&2; exit 1; }
+  if [[ "$name" == sweet-kde-videoyt ]]; then install_sweet; fi
+  if [[ "$name" == layan-minimalist-modern ]]; then install_layan; fi
+  # O gerenciador marca uma captura como ativa; registrar um preset nao deve
+  # mudar o indicador do perfil que o usuario realmente esta utilizando.
+  local active="$DEST/.ativo" old_active="" had_active=0
+  if [[ -f "$active" ]]; then old_active="$(cat "$active")"; had_active=1; fi
+  bash "$MANAGER" criar "$name" --dock "$dock"
+  if [[ "$had_active" == 1 ]]; then
+    printf '%s\n' "$old_active" > "$active"
+  else
+    rm -f -- "$active"
+  fi
+  config="$p/config"
+  mkdir -p "$config"
+  [[ -f "$config/kdeglobals" ]] || : > "$config/kdeglobals"
+  [[ -f "$config/kwinrc" ]] || : > "$config/kwinrc"
+  set_key "$config/kdeglobals" KDE LookAndFeelPackage "$look"
+  set_key "$config/kdeglobals" Icons Theme "$icons"
+  set_key "$config/kdeglobals" General ColorScheme "$colors"
+  if [[ -n "$decoration" ]]; then
+    set_key "$config/kwinrc" org.kde.kdecoration2 library org.kde.kwin.aurorae
+    set_key "$config/kwinrc" org.kde.kdecoration2 theme "$decoration"
+    for effect in blurEnabled contrastEnabled magiclampEnabled; do
+      kwriteconfig6 --file "$config/kwinrc" --group Plugins --key "$effect" --type bool true
+    done
+  fi
+  if [[ "$name" == layan-minimalist-modern ]]; then
+    wallpaper="${XDG_DATA_HOME:-$HOME/.local/share}/wallpapers/Layan/contents/images/2560x1440.png"
+    if [[ -f "$wallpaper" && -f "$config/plasma-org.kde.plasma.desktop-appletsrc" ]]; then
+      sed -i "s|^Image=.*|Image=$wallpaper|; s|^PreviewImage=.*|PreviewImage=$wallpaper|" "$config/plasma-org.kde.plasma.desktop-appletsrc"
+    fi
+    # Efeitos discretos; wallpaper do tema instalado no diretorio local.
+    kwriteconfig6 --file "$config/kwinrc" --group Plugins --key blurEnabled --type bool true
+    kwriteconfig6 --file "$config/kwinrc" --group Plugins --key contrastEnabled --type bool true
+  fi
+  if [[ "$name" == breeze-classico || "$name" == breeze-escuro-dock ]]; then
+    # Nao herdar decoracao Sweet ao registrar perfis Breeze.
+    set_key "$config/kwinrc" org.kde.kdecoration2 library org.kde.breeze
+    set_key "$config/kwinrc" org.kde.kdecoration2 theme Breeze
+  fi
+  printf 'catalog_recipe=%s\n' "$name" >> "$p/info"
+  printf '[CRIADO] %s (nao aplicado)\n' "$name"
+}
+case "${1:---help}" in
+  -h|--help) usage ;;
+  listar)
+    for name in "${profiles[@]}"; do
+      printf '%-24s %s%s\n' "$name" "$(description "$name")" "$([[ -f "$DEST/$name/.snapshot" ]] && echo ' [SALVO]' || true)"
+    done ;;
+  instalar|instalar-todos)
+    action="$1"; name="${2:-}"; dry=0
+    if [[ "$action" == instalar ]]; then
+      [[ -n "$name" ]] || { usage; exit 2; }
+      [[ "${3:-}" == "" || "${3:-}" == --dry-run ]] || { usage; exit 2; }
+      [[ "${3:-}" != --dry-run ]] || dry=1
+      register_one "$name" "$dry"
+    else
+      [[ "$name" == "" || "$name" == --dry-run ]] || { usage; exit 2; }
+      [[ "$name" != --dry-run ]] || dry=1
+      for name in "${profiles[@]}"; do register_one "$name" "$dry"; done
+    fi ;;
+  *) usage; exit 2 ;;
+esac

@@ -412,3 +412,21 @@ Recursos incluídos são **recuperados somente quando faltam**: o gerenciador n�
 Em todos os casos, prefixe os comandos com `bash scripts/perfis-kde.sh`, na raiz do repositório.
 
 ---
+
+## Catálogo de receitas visuais compartilháveis
+
+Use `bash scripts/perfis-kde.sh catalogo` para ver os presets, e `bash scripts/perfis-kde.sh instalar-presets --dry-run` para simular. Execute `instalar-todos` para registrar os que estiverem faltando, ou `instalar sweet-kde-videoyt` para registrar só esse. Os snapshots pessoais continuam em `~/.local/share/linux-hybrid/profiles/`, fora do Git.
+
+O catálogo oferece `sweet-kde-videoyt`, `breeze-escuro-dock` e `breeze-classico`. Registrar não ativa; use `bash scripts/perfis-kde.sh aplicar NOME`. Os presets herdam a organização do painel do ambiente onde são criados e só modificam as opções visuais documentadas. Para fidelidade completa, ajustes de wallpapers, widgets, fonte e Alt+Tab ainda exigem conferência manual. Recursos Sweet podem precisar de acesso ao GitHub; a Krema deve estar instalada separadamente. Não use sudo para executar o catálogo.
+
+## Layan Minimalist Modern
+
+Tema oficial: https://github.com/vinceliuice/Layan-kde (Layan Dark, Kvantum e Tela).
+
+```bash
+bash scripts/catalogo-visual-kde.sh instalar layan-minimalist-modern
+bash scripts/perfis-kde.sh aplicar layan-minimalist-modern
+bash scripts/perfis-kde.sh atual
+```
+
+O preset preserva os outros perfis e registra backup antes de aplicar. A imagem de referencia inclui dock inferior e janelas escuras; layout exato, wallpaper e posicao das janelas podem exigir ajuste manual.

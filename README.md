@@ -103,14 +103,18 @@ bash scripts/perfis-kde.sh dock off
 
 Os snapshots ficam em `~/.local/share/linux-hybrid/profiles/`, sem serem enviados ao repositório. Veja o [guia de perfis KDE](docs/perfis-visuais.md) para duplicar, renomear, excluir, recuperar versões e configurar Sweet, ícones e efeitos.
 
-### Temas visuais Sweet e recursos opcionais
+### Catálogo de perfis visuais
 
-O gerenciador `scripts/perfis-kde.sh` pode salvar e alternar perfis de aparência **já configurados localmente**. O instalador atual não oferece `--install-visual-profiles` nem inclui presets Sweet versionados. Temas como Sweet, Candy Icons e Andromeda devem ser instalados separadamente, antes de salvar os perfis. Consulte [recursos visuais e limitações](docs/recursos-visuais.md).
+O catálogo oferece quatro presets: `sweet-kde-videoyt`, `layan-minimalist-modern`, `breeze-escuro-dock` e `breeze-classico`. Instalar um preset registra sua configuração sem alterar o visual ativo. Para aplicar, use o gerenciador:
 
 ```bash
-bash scripts/perfis-kde.sh listar
+bash scripts/catalogo-visual-kde.sh listar
+bash scripts/catalogo-visual-kde.sh instalar layan-minimalist-modern
+bash scripts/perfis-kde.sh aplicar layan-minimalist-modern
 bash scripts/perfis-kde.sh atual
 ```
+
+A instalação dos temas de terceiros exige Git e internet; a dock Krema precisa estar instalada separadamente. O catálogo não publica snapshots pessoais e não garante reprodução pixel a pixel. Consulte [perfis KDE](docs/perfis-visuais.md) e [recursos visuais](docs/recursos-visuais.md) para detalhes e limitações.
 
 ## Atalhos do Windows no KDE
 
@@ -238,3 +242,12 @@ Se a Krema estiver aberta, ela será reiniciada para adotar os novos
 valores; se estiver desligada, permanece desligada. **Não use sudo**.
 Para o efeito Lâmpada Mágica, a ativação do plugin KWin é independente
 da ação de clique da dock.
+
+### Preset Layan Minimalist Modern
+
+```bash
+bash scripts/catalogo-visual-kde.sh instalar layan-minimalist-modern
+bash scripts/perfis-kde.sh aplicar layan-minimalist-modern
+```
+
+Detalhes em [docs/perfis-visuais.md](docs/perfis-visuais.md).

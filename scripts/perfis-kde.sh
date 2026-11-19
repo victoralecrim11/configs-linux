@@ -22,6 +22,9 @@ usage() {
 cat <<'HELP'
 Gerenciador de perfis visuais KDE Plasma 6 (nao instala aplicativos)
 Uso:
+  bash scripts/perfis-kde.sh catalogo
+  bash scripts/perfis-kde.sh instalar-preset NOME [--dry-run]
+  bash scripts/perfis-kde.sh instalar-presets [--dry-run]
   bash scripts/perfis-kde.sh criar NOME [--recursos] [--dock on|off|keep]
   bash scripts/perfis-kde.sh editar NOME [--recursos] [--dock on|off|keep]
   bash scripts/perfis-kde.sh duplicar ORIGEM DESTINO
@@ -640,6 +643,15 @@ import_legacy() {
 
 case "${1:---help}" in
   --help|-h|ajuda) usage ;;
+  catalogo)
+    [[ "$#" == 1 ]] || die "Uso: catalogo"
+    bash "$(dirname -- "${BASH_SOURCE[0]}")/catalogo-visual-kde.sh" listar ;;
+  instalar-preset)
+    [[ "$#" == 2 || ( "$#" == 3 && "$3" == --dry-run ) ]] || die "Uso: instalar-preset NOME [--dry-run]"
+    bash "$(dirname -- "${BASH_SOURCE[0]}")/catalogo-visual-kde.sh" instalar "${@:2}" ;;
+  instalar-presets)
+    [[ "$#" == 1 || ( "$#" == 2 && "$2" == --dry-run ) ]] || die "Uso: instalar-presets [--dry-run]"
+    bash "$(dirname -- "${BASH_SOURCE[0]}")/catalogo-visual-kde.sh" instalar-todos "${@:2}" ;;
   listar) list_profiles ;;
   atual) [[ "$#" == 1 ]] || die "Uso: atual"; current_profile ;;
   status) status ;;
