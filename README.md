@@ -135,7 +135,7 @@ bash scripts/atalhos-windows-kde.sh --dry-run
 bash scripts/atalhos-windows-kde.sh --apply
 ```
 
-Atalhos nativos: `Win+D`, `Win+L`, `Win+Tab`, `Win+V`, `Win+setas`, `Alt+Tab` e `Alt+F4`. Lançadores para `Win+E`, `Win+R`, `Win+I`, `Win+Shift+S`, `Ctrl+Alt+T`, `Ctrl+Shift+Esc` e `Ctrl+Alt+C` são preparados, mas **precisam ser validados em Configurações → Atalhos**, pois o KGlobalAccel do Plasma 6 pode não registrar entradas `.desktop` automaticamente. Veja [atalhos KDE](docs/atalhos-kde.md).
+Atalhos nativos: `Win+D`, `Win+L`, `Win+Tab`, `Win+V`, `Win+setas`, `Alt+Tab` e `Alt+F4`. Lançadores .desktop para `Win+E`, `Win+R`, `Win+I`, `Win+Shift+S`, `Ctrl+Alt+T`, `Ctrl+Shift+Esc` e `Ctrl+Alt+C` são preparados, mas **precisam ser validados em Configurações → Atalhos**, pois o KGlobalAccel do Plasma 6 pode não registrar entradas `.desktop` automaticamente. Veja [atalhos KDE](docs/atalhos-kde.md).
 
 ## Documentação
 
@@ -181,3 +181,26 @@ bash scripts/aplicar-visual-full.sh
 ```
 
 O painel aparece ao tocar a borda em que está posicionado. Caso Nuvole não seja encontrado, instale-o pelo gerenciador de papéis de parede do KDE e execute novamente.
+
+### Fontes comuns a todos os perfis
+
+Todos os perfis de instalação instalam **Fira Code**, **JetBrains Mono** e
+**Inter** pelo APT. No KDE Plasma, a interface usa Inter e a fonte
+monoespaçada padrão usa JetBrains Mono. Fira Code fica instalada para os
+editores/IDEs (configurar a preferência de cada editor separadamente).
+Os atalhos comuns ficam em `scripts/atalhos-windows-kde.sh`, com backups
+em `~/.local/state/linux-hybrid-v2/shortcuts/`. O Plasma 6 Wayland pode
+precisar de logout/login para registrar os atalhos dos lançadores.
+
+
+Para reaplicar as preferências KDE sem reinstalar ferramentas:
+
+```bash
+bash scripts/aplicar-comum-kde.sh
+```
+
+**Nota:** as fontes Inter e JetBrains Mono podem estar instaladas somente
+no diretório do usuário se não houve acesso administrativo; ao executar
+qualquer perfil de instalação, o APT instala os três pacotes globalmente.
+Os atalhos de lançadores no Plasma 6 Wayland exigem confirmação visual
+em Configurações do Sistema → Atalhos, possivelmente após novo login.
