@@ -225,3 +225,31 @@ Se o efeito não aparecer, confira **Configurações do Sistema → Efeitos da �
 de trabalho → Lâmpada Mágica** e faça logout/login. A disponibilidade do
 plugin depende da versão e dos pacotes do KWin; salvar a opção não garante
 que o efeito foi carregado na sessão.
+
+
+### Minimizar/restaurar pela dock Krema (todos os perfis)
+
+Ao clicar com o botão esquerdo no ícone de uma janela **ativa**, a Krema
+minimiza essa janela. Ao clicar novamente, ela restaura ou coloca em foco.
+Isso também funciona para aplicativos com várias janelas abertas: apenas a
+janela ativa do grupo é minimizada.
+
+O instalador aplica a opção em **premium**, **dev** e **full** quando executado
+em uma sessão KDE. O gerenciador `scripts/perfis-kde.sh` também reaplica
+o comportamento após restaurar qualquer perfil visual, evitando que snapshots
+antigos reponham o clique padrão. O script altera somente as chaves
+`SingleWindowClickAction=1` e `GroupedWindowClickAction=2` no grupo
+`[General]` de `~/.config/kremarc`, com backup da configuração anterior.
+
+Para aplicar imediatamente, **sem reinstalar os programas**:
+
+```bash
+cd ~/configs-linux
+bash scripts/configurar-clique-krema.sh --apply
+bash scripts/configurar-clique-krema.sh --status
+```
+
+Se a Krema estiver aberta, ela será reiniciada para adotar os novos
+valores; se estiver desligada, permanece desligada. **Não use sudo**.
+Para o efeito Lâmpada Mágica, a ativação do plugin KWin é independente
+da ação de clique da dock.
