@@ -58,6 +58,10 @@ setup_premium() {
   kwriteconfig6 --file kdeglobals --group General --key AccentColorFromWallpaper false
   kwriteconfig6 --file kdeglobals --group KDE --key AnimationDurationFactor 0.75
   apply_wallpaper
+  # Magic Lamp nativa: perfil Premium (e Full, que inclui Premium).
+  # Um erro ou incompatibilidade nao deve interromper a instalacao.
+  bash "$PROJECT_ROOT/scripts/efeito-lampada-magica.sh" --apply ||
+    warn "Efeito Magic Lamp nao ativado; confira Configuracoes > Efeitos da area de trabalho."
   # Este script conserva o painel e aceita Debian quando Krema ja esta instalado.
   bash "$perfil" aplicar || die "Falha ao configurar painel ou dock."
   bash "$alternar" backup || warn "Nao foi possivel registrar o perfil personalizado."
