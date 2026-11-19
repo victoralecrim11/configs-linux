@@ -33,8 +33,8 @@ Escolha um perfil, simule e depois instale:
 | Perfil | O que instala | Comando |
 | --- | --- | --- |
 | **Premium** | Visual KDE, Papirus, Breeze Dark e dock Krema | `bash install.sh --profile premium` |
-| **Dev Fullstack** | Java, PHP, Python, Node, Go, Rust, Ruby, bancos SQL e ferramentas de build | `bash install.sh --profile dev-fullstack` |
-| **Full** | Premium + Dev Fullstack | `bash install.sh --profile full` |
+| **Developer** | Git, Java, Python, PHP, Composer e ferramentas de desenvolvimento | `bash install.sh --profile dev` |
+| **Full** | Premium + Developer | `bash install.sh --profile full` |
 
 ```bash
 # Recomendado antes da execução real
@@ -46,14 +46,14 @@ bash install.sh --profile full
 
 O instalador solicita permissões `sudo` quando necessário. **Não execute com `sudo bash install.sh`**. Os perfis Premium e Full exigem KDE Plasma em sessão Wayland.
 
-Os extras do Dev Fullstack são opcionais: `--with-db-servers`, `--with-dbeaver`, `--with-java-extra`, `--with-docker`, `--with-dotnet` e `--with-vscode`. Node/npm já são incluídos por padrão. Consulte [todas as opções](docs/instalacao.md).
+Os extras do Developer são opcionais: `--with-node`, `--with-docker`, `--with-dotnet` e `--with-vscode`. Consulte [todas as opções](docs/instalacao.md).
 
 ## Perfis de instalação e status
 
 Perfis de **instalação** e de **aparência** são coisas diferentes.
 
 ```bash
-# Instalação: lista premium, dev-fullstack e full; mostra registro e pacotes atuais
+# Instalação: lista premium, dev e full; mostra registro e pacotes atuais
 bash install.sh --status
 
 # Verifica dependências presentes sem instalar
@@ -103,47 +103,33 @@ bash scripts/perfis-kde.sh dock off
 
 Os snapshots ficam em `~/.local/share/linux-hybrid/profiles/`, sem serem enviados ao repositório. Veja o [guia de perfis KDE](docs/perfis-visuais.md) para duplicar, renomear, excluir, recuperar versões e configurar Sweet, ícones e efeitos.
 
-### Dois perfis Sweet prontos para instalar e alternar
+### Temas visuais Sweet e recursos opcionais
 
-Os dois presets ficam em `presets/kde/` e podem ser registrados sem alterar o desktop atual:
+O gerenciador `scripts/perfis-kde.sh` pode salvar e alternar perfis de aparência **já configurados localmente**. O instalador atual não oferece `--install-visual-profiles` nem inclui presets Sweet versionados. Temas como Sweet, Candy Icons e Andromeda devem ser instalados separadamente, antes de salvar os perfis. Consulte [recursos visuais e limitações](docs/recursos-visuais.md).
 
 ```bash
-cd ~/configs-linux
-bash install.sh --install-visual-profiles --dry-run
-bash install.sh --install-visual-profiles
 bash scripts/perfis-kde.sh listar
-
-# Sweet com barra inferior e ícones centralizados, Krema desligada
-bash scripts/perfis-kde.sh aplicar sweet-centralizado-sem-krema
-
-# Sweet Space: painel superior, Andromeda e Krema sempre visível
-bash scripts/perfis-kde.sh aplicar sweet-space-dock
-
-# Conferir qual perfil está ativo/registrado
 bash scripts/perfis-kde.sh atual
-bash scripts/perfis-kde.sh status
 ```
-
-A instalação Premium/Full registra os dois presets automaticamente, mas **não os ativa**. Também tenta instalar Sweet, Candy Icons e Andromeda a partir dos repositórios GitHub oficiais sem sobrescrever recursos já instalados. Perfis existentes não são sobrescritos. O wallpaper Sweet-space e o tema global completo podem exigir instalação adicional pela KDE Store; o instalador identifica quando não os encontra. A Krema é instalada via APT no Premium/Full. Consulte [dependências visuais](docs/recursos-visuais.md).
 
 ## Atalhos do Windows no KDE
 
-Os perfis de instalação `premium`, `dev-fullstack` e `full` aplicam o mapa comum de atalhos **quando executados em sessão KDE**. A troca dos perfis visuais também tenta reaplicá-lo. Faça uma simulação antes:
+Os perfis de instalação `premium`, `dev` e `full` aplicam o mapa comum de atalhos **quando executados em sessão KDE**. A troca dos perfis visuais também tenta reaplicá-lo. Faça uma simulação antes:
 
 ```bash
 bash scripts/atalhos-windows-kde.sh --dry-run
 bash scripts/atalhos-windows-kde.sh --apply
 ```
 
-Atalhos nativos: `Win+D`, `Win+L`, `Win+Tab`, `Win+V`, `Win+setas`, `Alt+Tab` e `Alt+F4`. Lançadores .desktop para `Win+E`, `Win+R`, `Win+I`, `Win+Shift+S`, `Ctrl+Alt+T`, `Ctrl+Shift+Esc` e `Ctrl+Alt+C` são preparados, mas **precisam ser validados em Configurações → Atalhos**, pois o KGlobalAccel do Plasma 6 pode não registrar entradas `.desktop` automaticamente. Veja [atalhos KDE](docs/atalhos-kde.md).
+Atalhos nativos: `Win+D`, `Win+L`, `Win+Tab`, `Win+V`, `Win+setas`, `Alt+Tab` e `Alt+F4`. Lançadores .desktop para `Win+E`, `Win+R`, `Win+I`, `Win+Shift+S`, `Ctrl+Alt+T`, `Ctrl+Shift+Esc` e `Ctrl+Alt+C` são preparados, mas **precisam ser validados em Configurações → Atalhos**, pois o KGlobalAccel do Plasma 6 pode não registrar entradas `.desktop` automaticamente. Veja os detalhes em [recursos visuais](docs/recursos-visuais.md).
 
 ## Documentação
 
 | Guia | Assunto |
 | --- | --- |
-| [Dev Fullstack](docs/dev-fullstack.md) | Pacotes, linguagens, bancos de dados e opções |
+| [Instalação Developer](docs/instalacao.md) | Pacotes de desenvolvimento e opções |
 | [Recursos Sweet](docs/recursos-visuais.md) | Origem e limites da instalação automática |
-| [Atalhos KDE](docs/atalhos-kde.md) | Teclas Windows, testes e conflitos |
+| [Atalhos KDE](docs/recursos-visuais.md#fontes-e-atalhos) | Teclas Windows e notas de compatibilidade |
 | [Instalação](docs/instalacao.md) | Perfis, distribuições e opções |
 | [Status de instalação](docs/status-instalacao.md) | Registro automático e verificação dos pacotes |
 | [Perfis visuais KDE](docs/perfis-visuais.md) | Criar, editar e alternar configurações |
@@ -156,7 +142,6 @@ Atalhos nativos: `Win+D`, `Win+L`, `Win+Tab`, `Win+V`, `Win+setas`, `Alt+Tab` e 
 ```bash
 bash tests/smoke.sh
 bash tests/perfis-kde-smoke.sh
-bash tests/presets-visuais-smoke.sh
 bash tests/sweet-barra-smoke.sh
 ```
 
