@@ -14,6 +14,8 @@ source "$PROJECT_ROOT/lib/install-status.sh"
 source "$PROJECT_ROOT/lib/krema.sh"
 # shellcheck source=lib/premium.sh
 source "$PROJECT_ROOT/lib/premium.sh"
+# shellcheck source=lib/full-visual.sh
+source "$PROJECT_ROOT/lib/full-visual.sh"
 # shellcheck source=lib/dev.sh
 source "$PROJECT_ROOT/lib/dev.sh"
 
@@ -214,6 +216,7 @@ if [[ "$PROFILE" == premium || "$PROFILE" == full ]]; then
   run_install_step premium
 fi
 if [[ "$PROFILE" == full ]]; then
+  setup_full_visual
   if install_status_check full "$REQUESTED_EXTRAS"; then
     full_status=concluido
   else
