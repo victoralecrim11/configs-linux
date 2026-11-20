@@ -30,7 +30,7 @@ SH
 chmod +x "$TMP/mock/flatpak"
 source "$ROOT/lib/flatpak-discover.sh"
 info() { :; }
-die() { echo "$*" >&2; return 1; }
+die() { echo "$*" >&2; exit 1; }
 require_cmd() { command -v "$1" >/dev/null 2>&1; }
 apt_install_safe() {
   [[ "$1" == "Flatpak e Discover (APT)" && "$#" -eq 5 ]] || return 1
