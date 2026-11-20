@@ -87,4 +87,5 @@ if bash "$ROOT/install.sh" --profile dev --yes --os-release "$ROOT/tests/fixture
 fi
 echo "[OK] override de distro permitido somente em simulacao"
 bash "$ROOT/tests/install-status-smoke.sh"
+bash "$ROOT/tests/flatpak-discover-smoke.sh"
 echo "Todos os testes de smoke passaram. Nenhuma instalacao foi executada."
