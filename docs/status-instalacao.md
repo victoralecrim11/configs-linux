@@ -22,7 +22,9 @@ bash install.sh --verify-profile dev
 bash install.sh --profile full --dry-run
 ```
 
-A verificação mostra quantos pacotes básicos estão instalados e quais faltam. Os extras são verificados quando foram solicitados e registrados em uma instalação.
+A verificação mostra quantos pacotes básicos estão instalados e quais faltam. Os extras são verificados quando foram solicitados e registrados em uma instalação. Os pacotes Flatpak/Discover são comuns a todos os perfis, mas `--status` e `--verify-profile` não verificam a existência do remoto Flathub nem a disponibilidade efetiva da fonte no Discover. Para isso, execute `flatpak remotes --show-details` e confira a seção **Fontes** do Discover.
+
+Os presets visuais Sweet, Layan e Breeze **não entram na contagem de pacotes**; são snapshots independentes. Por padrão não são registrados pelo `install.sh`: use `--with-visual-presets` com Premium/Full ou `bash scripts/catalogo-visual-kde.sh instalar-todos`. Para saber quais existem, rode `bash scripts/catalogo-visual-kde.sh listar` e `bash scripts/perfis-kde.sh listar`.
 
 ## Registro automático de cada etapa
 
