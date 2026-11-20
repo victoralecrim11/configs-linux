@@ -6,7 +6,9 @@ install_status_root() {
   printf '%s\n' "${XDG_STATE_HOME:-$HOME/.local/state}/linux-hybrid-v2/perfis-instalacao"
 }
 install_status_packages() {
-  printf '%s\n' fonts-firacode fonts-jetbrains-mono fonts-inter
+  # Componentes compartilhados pelos perfis dev, premium e full.
+  printf '%s\n' fonts-firacode fonts-jetbrains-mono fonts-inter \
+    flatpak plasma-discover plasma-discover-backend-flatpak kde-config-flatpak
   case "$1" in
     premium)
       printf '%s\n' papirus-icon-theme fonts-firacode btop fastfetch librsvg2-bin curl ca-certificates krema
