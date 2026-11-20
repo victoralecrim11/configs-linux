@@ -18,6 +18,8 @@ source "$PROJECT_ROOT/lib/premium.sh"
 source "$PROJECT_ROOT/lib/full-visual.sh"
 # shellcheck source=lib/dev.sh
 source "$PROJECT_ROOT/lib/dev.sh"
+# shellcheck source=lib/flatpak-discover.sh
+source "$PROJECT_ROOT/lib/flatpak-discover.sh"
 # shellcheck source=lib/common-desktop.sh
 source "$PROJECT_ROOT/lib/common-desktop.sh"
 
@@ -28,6 +30,7 @@ WITH_NODE=0
 WITH_DOCKER=0
 WITH_DOTNET=0
 WITH_VSCODE=0
+WITH_VISUAL_PRESETS=0
 DETECT_ONLY=0
 CHECK_SESSION=0
 LIST_PROFILES=0
@@ -52,6 +55,7 @@ Uso: bash install.sh [--profile premium|dev|full] [opcoes]
   --with-docker       Incluir Docker (se nao houver podman-docker)
   --with-dotnet       Incluir .NET SDK 10 e feed Microsoft se necessario
   --with-vscode       Incluir VS Code e feed Microsoft se necessario
+  --with-visual-presets  Registrar os 4 presets KDE (Premium/Full; nao ativa)
   --os-release FILE   Apenas com --dry-run: testar a deteccao com fixture
   -h, --help          Ajuda
 
@@ -77,6 +81,7 @@ while (($#)); do
     --with-docker) WITH_DOCKER=1; shift ;;
     --with-dotnet) WITH_DOTNET=1; shift ;;
     --with-vscode) WITH_VSCODE=1; shift ;;
+    --with-visual-presets) WITH_VISUAL_PRESETS=1; shift ;;
     --os-release) (($#>=2)) || die "Falta caminho."; OS_RELEASE_FILE="$2"; shift 2 ;;
     -h|--help) help_text; exit 0 ;;
     *) die "Argumento desconhecido: $1. Execute --help." ;;
@@ -134,6 +139,9 @@ case "$PROFILE" in premium|dev|full) ;; *) die "Perfil invalido: $PROFILE" ;; es
 if [[ "$PROFILE" == premium ]] && (( WITH_NODE || WITH_DOCKER || WITH_DOTNET || WITH_VSCODE )); then
   die "Extras dev exigem --profile dev ou --profile full."
 fi
+if [[ "$PROFILE" == dev ]] && (( WITH_VISUAL_PRESETS )); then
+  die "--with-visual-presets exige --profile premium ou --profile full."
+fi
 
 info "Perfil: $PROFILE"
 if (( DRY_RUN )); then
@@ -148,7 +156,12 @@ if (( DRY_RUN )); then
     [[ "$WITH_DOTNET" -eq 0 || "$DISTRO_BACKEND" != debian ]] ||
       info "Dotnet no Debian: pacote oficial packages-microsoft-prod.deb"
   fi
-  info "Comum a todos: fontes Fira Code, JetBrains Mono e Inter + atalhos Windows KDE."
+  info "Comum a todos: fontes Fira Code, JetBrains Mono e Inter; Flatpak, Discover e Flathub; atalhos Windows KDE."
+  if (( WITH_VISUAL_PRESETS )); then
+    info "Presets opcionais: Sweet, Layan e dois Breeze (somente registra, nao aplica; baixa temas de terceiros)."
+  else
+    info "Presets visuais nao sao registrados por padrao; use --with-visual-presets no Premium/Full."
+  fi
   info "Durante instalacao real: confirmacao, backup local, simulacao APT e bloqueio de remocoes."
   exit 0
 fi
@@ -191,15 +204,9 @@ install_failure_record() {
 }
 trap 'install_failure_record "$?"' EXIT
 
-run_install_step() {
+record_install_step() {
   local step="$1" extras="none" status
-  ACTIVE_STEP="$step"
-  if [[ "$step" == dev ]]; then
-    extras="$REQUESTED_EXTRAS"
-    setup_developer
-  else
-    setup_premium
-  fi
+  [[ "$step" != dev ]] || extras="$REQUESTED_EXTRAS"
   if install_status_check "$step" "$extras"; then
     status=concluido
     info "Verificacao $step: $INSTALL_STATUS_PRESENT/$INSTALL_STATUS_TOTAL pacotes presentes."
@@ -209,8 +216,19 @@ run_install_step() {
   fi
   install_status_write "$step" "$status" "$extras" instalador "$INSTALL_STATUS_MISSING" ||
     die "Nao foi possivel registrar o status de $step."
-  ACTIVE_STEP=""
   info "Status registrado: $step=$status."
+}
+run_install_step() {
+  local step="$1"
+  ACTIVE_STEP="$step"
+  if [[ "$step" == dev ]]; then
+    setup_developer
+  else
+    setup_premium
+  fi
+  # Registro inicial: os pacotes comuns serao conferidos novamente ao final.
+  record_install_step "$step"
+  ACTIVE_STEP=""
 }
 if [[ "$PROFILE" == dev || "$PROFILE" == full ]]; then
   run_install_step dev
@@ -218,9 +236,25 @@ fi
 if [[ "$PROFILE" == premium || "$PROFILE" == full ]]; then
   run_install_step premium
 fi
+# Esta etapa instala fontes e Flatpak; os registros sao atualizados ao final.
+ACTIVE_STEP="$REQUESTED_INSTALL"
 setup_common_desktop
 if [[ "$PROFILE" == full ]]; then
   setup_full_visual
+fi
+if (( WITH_VISUAL_PRESETS )); then
+  confirm "Baixar e registrar Sweet, Layan e Breeze? O Layan executa o instalador do projeto terceiro como usuario normal." ||
+    die "Instalacao de presets cancelada."
+  bash "$PROJECT_ROOT/scripts/catalogo-visual-kde.sh" instalar-todos ||
+    die "Falha ao registrar um ou mais presets visuais; consulte o log."
+fi
+if [[ "$PROFILE" == dev || "$PROFILE" == full ]]; then
+  record_install_step dev
+fi
+if [[ "$PROFILE" == premium || "$PROFILE" == full ]]; then
+  record_install_step premium
+fi
+if [[ "$PROFILE" == full ]]; then
   if install_status_check full "$REQUESTED_EXTRAS"; then
     full_status=concluido
   else
@@ -231,6 +265,7 @@ if [[ "$PROFILE" == full ]]; then
     die "Falha ao registrar Full."
   info "Status registrado: full=$full_status."
 fi
+ACTIVE_STEP=""
 trap - EXIT
 info "Etapas finalizadas. Consulte: bash install.sh --status"
 info "Para alternar a barra: bash scripts/perfis-kde.sh listar"

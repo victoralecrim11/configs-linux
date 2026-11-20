@@ -48,6 +48,18 @@ O instalador solicita permissões `sudo` quando necessário. **Não execute com 
 
 Os extras do Developer são opcionais: `--with-node`, `--with-docker`, `--with-dotnet` e `--with-vscode`. Consulte [todas as opções](docs/instalacao.md).
 
+### Flatpak, Flathub e Discover
+
+**Todos os perfis de instalação** agora incluem `flatpak`, `plasma-discover`, `plasma-discover-backend-flatpak` e `kde-config-flatpak`. O instalador adiciona **Flathub para o usuário atual**, se ainda não existir como remoto de usuário ou sistema, sem sobrescrever nem duplicar configurações. Assim, aplicativos Flatpak ficam disponíveis no Discover. A instalação não baixa aplicativos do Flathub automaticamente.
+
+```bash
+# Conferir os pacotes e a fonte Flathub depois de instalar
+bash install.sh --verify-profile full
+flatpak remotes --show-details
+```
+
+Feche e reabra o Discover; faça logout/login (ou reinicie) se os apps Flatpak ainda não aparecerem. A verificação `--verify-profile` confere pacotes, não o remoto Flathub nem a interface gráfica. Consulte [o guia de instalação](docs/instalacao.md).
+
 ## Perfis de instalação e status
 
 Perfis de **instalação** e de **aparência** são coisas diferentes.
@@ -113,6 +125,15 @@ bash scripts/catalogo-visual-kde.sh instalar layan-minimalist-modern
 bash scripts/perfis-kde.sh aplicar layan-minimalist-modern
 bash scripts/perfis-kde.sh atual
 ```
+
+**Os quatro presets não são registrados automaticamente por padrão**. Para incluí-los na execução de Premium ou Full, use o opt-in:
+
+```bash
+bash install.sh --profile full --with-visual-presets --dry-run
+bash install.sh --profile full --with-visual-presets
+```
+
+O instalador pede confirmação adicional: registra os quatro perfis **sem aplicar nenhum**, preserva perfis existentes e instala recursos dos temas Sweet/Layan a partir de projetos de terceiros (inclusive executando o instalador do Layan como usuário comum). Também é possível registrar os perfis separadamente pelo catálogo. O perfil `dev` não instala presets visuais, mesmo com Flatpak e Discover disponíveis.
 
 A instalação dos temas de terceiros exige Git e internet; a dock Krema precisa estar instalada separadamente. O catálogo não publica snapshots pessoais e não garante reprodução pixel a pixel. Consulte [perfis KDE](docs/perfis-visuais.md) e [recursos visuais](docs/recursos-visuais.md) para detalhes e limitações.
 
