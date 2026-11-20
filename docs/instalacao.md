@@ -58,6 +58,36 @@ bash install.sh --profile full --with-node --with-docker --with-dotnet --with-vs
 
 Os extras **não** são instalados implicitamente no perfil Dev ou Full. Isso evita adicionar serviços e repositórios que você talvez não queira. Pacotes indisponíveis são informados e instalações APT com remoção de dependências são bloqueadas.
 
+### Flatpak/Flathub integrado ao KDE Discover (padrão)
+
+Todo perfil (`dev`, `premium`, `full`) instala pelo APT: `flatpak`, `plasma-discover`, `plasma-discover-backend-flatpak` e `kde-config-flatpak`. Depois, o script detecta se o remoto `flathub` já existe no escopo do usuário ou do sistema. Se não existir em nenhum deles, adiciona-o **somente ao usuário atual** com:
+
+```bash
+flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+```
+
+A configuração é idempotente e não instala apps Flatpak automaticamente. O Discover deverá oferecer a fonte Flathub após reiniciá-lo; faça logout/login para atualizar integrações de sessão.
+
+```bash
+flatpak remotes --show-details
+dpkg-query -W flatpak plasma-discover plasma-discover-backend-flatpak kde-config-flatpak
+```
+
+O rastreador de perfis valida a **presença dos pacotes**, não se a fonte Flathub aparece visualmente no Discover. Se a rede falhar durante a configuração do remoto, a instalação retorna erro e a falha é registrada.
+
+### Presets visuais (opcionais, Premium/Full)
+
+A instalação convencional do Premium/Full prepara o visual, Krema e ferramentas, mas **não** registra automaticamente `sweet-kde-videoyt`, `layan-minimalist-modern`, `breeze-escuro-dock` e `breeze-classico`.
+
+```bash
+bash install.sh --profile full --with-visual-presets --dry-run
+bash install.sh --profile full --with-visual-presets
+bash scripts/catalogo-visual-kde.sh listar
+bash scripts/perfis-kde.sh listar
+```
+
+O `--with-visual-presets` pede confirmação específica, baixa temas externos (Sweet e Layan), executa o instalador upstream do Layan como usuário normal e **registra sem ativar** os quatro perfis. Perfis já salvos permanecem intactos. `--with-visual-presets` não é permitido com `--profile dev` e não afeta a instalação padrão sem a flag. Para ativar, use `bash scripts/perfis-kde.sh aplicar NOME`.
+
 
 ### Alternar KDE original ↔ Premium
 
