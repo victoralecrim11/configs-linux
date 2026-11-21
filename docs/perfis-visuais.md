@@ -430,3 +430,16 @@ bash scripts/perfis-kde.sh atual
 ```
 
 O preset preserva os outros perfis e registra backup antes de aplicar. A imagem de referencia inclui dock inferior e janelas escuras; layout exato, wallpaper e posicao das janelas podem exigir ajuste manual.
+
+## Catppuccin Mocha — tutorial de vídeo
+
+Perfil: `catppuccin-mocha-videoyt`, baseado em [COMO DEIXAR SEU LINUX LINDO! Customização no KDE Plasma + Catppuccin](https://youtu.be/usXZBNjo8gI). Usa Catppuccin Mocha Mauve ([repositório oficial](https://github.com/catppuccin/kde)), painel superior e dock Krema inferior com auto-ocultação.
+
+```bash
+bash scripts/perfis-kde.sh instalar-preset catppuccin-mocha-videoyt --dry-run
+bash scripts/perfis-kde.sh instalar-preset catppuccin-mocha-videoyt
+bash scripts/perfis-kde.sh aplicar catppuccin-mocha-videoyt
+bash scripts/perfis-kde.sh restaurar-ultimo
+```
+
+Registrar o preset só baixa/instala os arquivos de tema na conta do usuário, sem rodar o instalador upstream que alteraria o desktop imediatamente. O papel de parede anime do trem, fontes e widgets exatos **não** são incluídos: imagem fornecida como referência, não como arquivo redistribuível. A identidade visual ainda depende da versão do Plasma e dos widgets existentes. Para uma dock inferior funcional, é necessária a Krema; sem ela, o gerenciador sinaliza dependência ausente.
