@@ -6,7 +6,7 @@ install_status_root() {
   printf '%s\n' "${XDG_STATE_HOME:-$HOME/.local/state}/linux-hybrid-v2/perfis-instalacao"
 }
 install_status_packages() {
-  # Componentes compartilhados pelos perfis dev, premium e full.
+  # Componentes compartilhados pelos perfis dev-fullstack, premium e full.
   printf '%s\n' fonts-firacode fonts-jetbrains-mono fonts-inter \
     flatpak plasma-discover plasma-discover-backend-flatpak kde-config-flatpak
   case "$1" in
@@ -104,10 +104,12 @@ install_status_write() {
   mv -f -- "$temp" "$file"
 }
 install_status_display() {
-  local name file saved origin extras missing result total present
+  local name display_name file saved origin extras missing result total present
   local root="$(install_status_root)"
-  printf '%-9s %-16s %-14s %-16s %s\n' 'PERFIL' 'REGISTRO' 'PACOTES' 'ORIGEM' 'DETALHES'
+  printf '%-15s %-16s %-14s %-16s %s\n' 'PERFIL' 'REGISTRO' 'PACOTES' 'ORIGEM' 'DETALHES'
   for name in premium dev full; do
+    display_name="$name"
+    [[ "$name" != dev ]] || display_name=dev-fullstack
     file="$root/$name.state"
     saved="$(install_status_read "$file" status)"
     origin="$(install_status_read "$file" origin)"
@@ -127,22 +129,23 @@ install_status_display() {
     elif [[ "$saved" == concluido && "$result" != ok ]]; then
       saved="desatualizado"
     fi
-    printf '%-9s %-16s %2s/%-10s %-16s %s\n' \
-      "$name" "$saved" "$present" "$total" "${origin:--}" \
+    printf '%-15s %-16s %2s/%-10s %-16s %s\n' \
+      "$display_name" "$saved" "$present" "$total" "${origin:--}" \
       "${missing:-pacotes verificados}"
   done
   printf '\nOs registros representam execucoes do instalador, nao perfis visuais.\n'
   printf 'Sem registro = nenhuma conclusao comprovada pelo rastreador (mesmo se pacotes existirem).\n'
 }
 install_status_verify() {
-  local profile="$1" extras="${2:-none}"
+  local profile="$1" extras="${2:-none}" display_name="$1"
+  [[ "$display_name" != dev ]] || display_name=dev-fullstack
   case "$profile" in premium|dev|full) ;; *) return 2 ;; esac
   if install_status_check "$profile" "$extras"; then
     printf '[OK] %s: %s/%s pacotes presentes; executaveis basicos verificados.\n' \
-      "$profile" "$INSTALL_STATUS_PRESENT" "$INSTALL_STATUS_TOTAL"
+      "$display_name" "$INSTALL_STATUS_PRESENT" "$INSTALL_STATUS_TOTAL"
   else
     printf '[INCOMPLETO] %s: %s/%s pacotes presentes.\n' \
-      "$profile" "$INSTALL_STATUS_PRESENT" "$INSTALL_STATUS_TOTAL"
+      "$display_name" "$INSTALL_STATUS_PRESENT" "$INSTALL_STATUS_TOTAL"
     printf 'Ausentes: %s\n' "$INSTALL_STATUS_MISSING"
     return 1
   fi
