@@ -8,10 +8,10 @@ O projeto tem **dois tipos diferentes de perfil**:
 
 | Tipo | Exemplo | Serve para |
 | --- | --- | --- |
-| **Instalação** | `premium`, `dev`, `full` | Instalar programas e preparar a distribuição com `install.sh`. |
+| **Instalação** | `premium`, `dev-fullstack`, `full` | Instalar programas e preparar a distribuição com `install.sh`. |
 | **Aparência** | `hybrid-premium`, `sweet`, `kde-padrao-centralizado` | Salvar/trocar tema, ícones, barra, widgets e Krema com `scripts/perfis-kde.sh`. |
 
-**Uma instalação Premium não é um perfil visual salvo.** Alterar a aparência não reinstala programas; instalar ferramentas Developer não muda necessariamente o visual.
+**Uma instalação Premium não é um perfil visual salvo.** Alterar a aparência não reinstala programas; instalar ferramentas Dev Fullstack não muda necessariamente o visual.
 
 ### Instalar ou atualizar o repositório
 
@@ -258,7 +258,7 @@ bash scripts/perfis-kde.sh aplicar kubuntu-painel-padrao      # Kubuntu original
 
 O **`scripts/perfis-kde.sh`** permite salvar, listar, inspecionar e aplicar **vários perfis de aparência com nomes diferentes**, sem sobrescrever a configuração anterior. É independente dos perfis de **instalação** do `install.sh`:
 
-- **Premium / Dev / Full:** instalam programas e preparam o sistema.
+- **Premium / Dev Fullstack / Full:** instalam programas e preparam o sistema.
 - **Original / hybrid-premium / sweet / outros:** são **fotografias locais da aparência do KDE**. Alternar entre elas **não** reinstala programas.
 
 Os perfis ficam **somente no computador**, em `${XDG_DATA_HOME:-$HOME/.local/share}/linux-hybrid/profiles/`. Não são adicionados ao Git automaticamente e podem conter preferências pessoais, wallpapers ou fontes que você não deve publicar.

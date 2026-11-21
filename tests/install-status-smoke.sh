@@ -26,7 +26,7 @@ DISTRO_VERSION=13
 # Consulta nao grava nenhum registro sem conclusao.
 output="$(bash "$PROJECT_ROOT/install.sh" --status)"
 grep -q 'premium.*sem registro' <<< "$output"
-grep -q 'dev.*sem registro' <<< "$output"
+grep -q 'dev-fullstack.*sem registro' <<< "$output"
 grep -q 'full.*sem registro' <<< "$output"
 [[ ! -e "$XDG_STATE_HOME/linux-hybrid-v2/perfis-instalacao" ]]
 bash "$PROJECT_ROOT/install.sh" --profile full --dry-run >/dev/null
@@ -44,14 +44,23 @@ install_status_write full concluido node instalador ""
 [[ "$(install_status_read "$(install_status_root)/full.state" status)" == concluido ]]
 output="$(bash "$PROJECT_ROOT/install.sh" --list-profiles)"
 grep -qE '^premium +concluido ' <<< "$output"
-grep -qE '^dev +concluido ' <<< "$output"
+grep -qE '^dev-fullstack +concluido ' <<< "$output"
 grep -qE '^full +concluido ' <<< "$output"
-echo '[OK] premium/dev/full registrados com estado verificavel'
+echo '[OK] premium/dev-fullstack/full registrados com estado verificavel'
+
+# Comando canonico usa o registro historico dev.state sem migrar/sobrescrever.
+output="$(bash "$PROJECT_ROOT/install.sh" --verify-profile dev-fullstack)"
+grep -q '^\[OK\] dev-fullstack:' <<< "$output"
+output="$(bash "$PROJECT_ROOT/install.sh" --verify-profile dev)"
+grep -q '^\[OK\] dev-fullstack:' <<< "$output"
+[[ -f "$(install_status_root)/dev.state" ]]
+[[ ! -e "$(install_status_root)/dev-fullstack.state" ]]
+echo '[OK] perfil dev-fullstack e alias dev consultam o mesmo registro legado'
 
 # Falha simulada detectada na consulta, mesmo que o registro diga concluido.
 export TEST_MISSING_PACKAGE=openjdk-21-jdk
 output="$(bash "$PROJECT_ROOT/install.sh" --status)"
-grep -qE '^dev +desatualizado ' <<< "$output"
+grep -qE '^dev-fullstack +desatualizado ' <<< "$output"
 grep -qE '^full +desatualizado ' <<< "$output"
 grep -qE '^premium +concluido ' <<< "$output"
 if bash "$PROJECT_ROOT/install.sh" --verify-profile full >/dev/null 2>&1; then
@@ -63,7 +72,7 @@ echo '[OK] dependencia ausente invalida resultado anterior'
 export TEST_MISSING_PACKAGE=''
 install_status_write dev falhou none instalador 'simulacao'
 output="$(bash "$PROJECT_ROOT/install.sh" --status)"
-grep -qE '^dev +falhou ' <<< "$output"
+grep -qE '^dev-fullstack +falhou ' <<< "$output"
 echo '[OK] falha de etapa e status preservados'
 
 # Apenas nomes conhecidos podem ser gravados.
