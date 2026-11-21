@@ -33,8 +33,8 @@ Escolha um perfil, simule e depois instale:
 | Perfil | O que instala | Comando |
 | --- | --- | --- |
 | **Premium** | Visual KDE, Papirus, Breeze Dark e dock Krema | `bash install.sh --profile premium` |
-| **Developer** | Git, Java, Python, PHP, Composer e ferramentas de desenvolvimento | `bash install.sh --profile dev` |
-| **Full** | Premium + Developer | `bash install.sh --profile full` |
+| **Dev Fullstack** | Git, Java, Python, PHP, Composer e ferramentas de desenvolvimento | `bash install.sh --profile dev-fullstack` |
+| **Full** | Premium + Dev Fullstack | `bash install.sh --profile full` |
 
 ```bash
 # Recomendado antes da execução real
@@ -46,7 +46,7 @@ bash install.sh --profile full
 
 O instalador solicita permissões `sudo` quando necessário. **Não execute com `sudo bash install.sh`**. Os perfis Premium e Full exigem KDE Plasma em sessão Wayland.
 
-Os extras do Developer são opcionais: `--with-node`, `--with-docker`, `--with-dotnet` e `--with-vscode`. Consulte [todas as opções](docs/instalacao.md).
+Os extras do Dev Fullstack são opcionais: `--with-node`, `--with-docker`, `--with-dotnet` e `--with-vscode`. Consulte [todas as opções](docs/instalacao.md).
 
 ### Flatpak, Flathub e Discover
 
@@ -65,12 +65,15 @@ Feche e reabra o Discover; faça logout/login (ou reinicie) se os apps Flatpak a
 Perfis de **instalação** e de **aparência** são coisas diferentes.
 
 ```bash
-# Instalação: lista premium, dev e full; mostra registro e pacotes atuais
+# Instalação: lista premium, dev-fullstack e full; mostra registro e pacotes atuais
 bash install.sh --status
 
 # Verifica dependências presentes sem instalar
+bash install.sh --verify-profile dev-fullstack
 bash install.sh --verify-profile full
 ```
+
+O nome oficial é `dev-fullstack`; `--profile dev` e `--verify-profile dev` continuam aceitos por compatibilidade. O histórico local permanece no arquivo `dev.state`, sem necessidade de migração.
 
 A execução real registra cada etapa como `concluido`, `parcial` ou `falhou`. Caso um pacote seja removido depois, o perfil pode aparecer como `desatualizado`. Instalações feitas antes da implementação aparecem como `sem registro`, mesmo que todos os pacotes estejam presentes — não se inventa histórico de execução.
 
