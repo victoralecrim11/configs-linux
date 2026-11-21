@@ -39,13 +39,25 @@ O último comando deve ser executado **antes de personalizar**, quando o painel 
 | Perfil | Comando | O que instala |
 |---|---|---|
 | **Premium** (`visual`) | `bash install.sh --profile premium` | Breeze Dark, Papirus, wallpaper e painel superior com dock Krema |
-| **Developer** | `bash install.sh --profile dev` | Git, compiladores, Python, Java 21, Maven, PHP, Composer e utilitários |
-| **Full** | `bash install.sh --profile full` | Premium + Developer |
+| **Dev Fullstack** | `bash install.sh --profile dev-fullstack` | Git, compiladores, Python, Java 21, Maven, PHP, Composer e utilitários |
+| **Full** | `bash install.sh --profile full` | Premium + Dev Fullstack |
 
 Sem `--profile`, o instalador exibe uma seleção interativa no Konsole. Para automações não interativas, informe o perfil e `--yes` explicitamente (inclusive quando autorizar repositórios de terceiros). **Nunca execute `sudo bash install.sh`.** O script solicita `sudo` somente quando necessário.
 
 
-### Extras do perfil Developer (opcionais)
+### Alias de compatibilidade do Dev Fullstack
+
+O nome oficial para o usuário é `dev-fullstack`. O comando antigo `--profile dev` continua funcionando como alias para os mesmos pacotes, e `bash install.sh --verify-profile dev` também é aceito. O rastreador preserva o arquivo `dev.state` existente (não renomeia nem exclui histórico). `bash install.sh --status` apresenta o perfil como `dev-fullstack`.
+
+```bash
+bash install.sh --profile dev-fullstack --dry-run
+bash install.sh --profile dev-fullstack
+bash install.sh --verify-profile dev-fullstack
+```
+
+O nome "Fullstack" é a identificação do perfil; Node.js, Docker, .NET e VS Code ainda são **extras opcionais**, conforme descrito acima.
+
+### Extras do perfil Dev Fullstack (opcionais)
 
 ```bash
 bash install.sh --profile full --with-node --with-docker --with-dotnet --with-vscode
@@ -60,7 +72,7 @@ Os extras **não** são instalados implicitamente no perfil Dev ou Full. Isso ev
 
 ### Flatpak/Flathub integrado ao KDE Discover (padrão)
 
-Todo perfil (`dev`, `premium`, `full`) instala pelo APT: `flatpak`, `plasma-discover`, `plasma-discover-backend-flatpak` e `kde-config-flatpak`. Depois, o script detecta se o remoto `flathub` já existe no escopo do usuário ou do sistema. Se não existir em nenhum deles, adiciona-o **somente ao usuário atual** com:
+Todo perfil (`dev-fullstack`, `premium`, `full`) instala pelo APT: `flatpak`, `plasma-discover`, `plasma-discover-backend-flatpak` e `kde-config-flatpak`. Depois, o script detecta se o remoto `flathub` já existe no escopo do usuário ou do sistema. Se não existir em nenhum deles, adiciona-o **somente ao usuário atual** com:
 
 ```bash
 flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
@@ -86,7 +98,7 @@ bash scripts/catalogo-visual-kde.sh listar
 bash scripts/perfis-kde.sh listar
 ```
 
-O `--with-visual-presets` pede confirmação específica, baixa temas externos (Sweet e Layan), executa o instalador upstream do Layan como usuário normal e **registra sem ativar** os quatro perfis. Perfis já salvos permanecem intactos. `--with-visual-presets` não é permitido com `--profile dev` e não afeta a instalação padrão sem a flag. Para ativar, use `bash scripts/perfis-kde.sh aplicar NOME`.
+O `--with-visual-presets` pede confirmação específica, baixa temas externos (Sweet e Layan), executa o instalador upstream do Layan como usuário normal e **registra sem ativar** os quatro perfis. Perfis já salvos permanecem intactos. `--with-visual-presets` não é permitido com `--profile dev-fullstack` e não afeta a instalação padrão sem a flag. Para ativar, use `bash scripts/perfis-kde.sh aplicar NOME`.
 
 
 ### Alternar KDE original ↔ Premium
@@ -98,7 +110,7 @@ bash scripts/alternar-barra-kde.sh personalizada
 bash scripts/alternar-barra-kde.sh backup
 ```
 
-A alternância controla o painel e a dock Krema, mas **não desinstala ferramentas Developer**. A reinstalação do Krema usa PPA no Ubuntu 26.04 e OBS assinado por chave dedicada no Debian 13. Em uma instalação nova, faça logout/login caso os efeitos ainda não estejam visíveis.
+A alternância controla o painel e a dock Krema, mas **não desinstala ferramentas Dev Fullstack**. A reinstalação do Krema usa PPA no Ubuntu 26.04 e OBS assinado por chave dedicada no Debian 13. Em uma instalação nova, faça logout/login caso os efeitos ainda não estejam visíveis.
 
 
 ### Atualizar os scripts
@@ -116,7 +128,7 @@ Se aparecerem conflitos, verifique `git status` antes de atualizar. Os backups p
 ```bash
 bash tests/smoke.sh
 bash install.sh --profile premium --dry-run
-bash install.sh --profile dev --dry-run
+bash install.sh --profile dev-fullstack --dry-run
 ```
 
 Os testes verificam sintaxe e seleção de distro/perfil **sem instalar pacotes**. A primeira instalação real da v2 no Debian 13 e em Kubuntu 26.04 deve ser validada em VM ou ambiente descartável antes de usar na máquina principal. A lógica de pacotes é baseada em listas revisadas e fontes oficiais do projeto; o instalador **não pesquisa e executa comandos arbitrários da internet**.
