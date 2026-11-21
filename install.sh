@@ -40,16 +40,16 @@ OS_RELEASE_FILE="/etc/os-release"
 help_text() {
   cat <<'HELP'
 Linux Hybrid Setup 2.0
-Uso: bash install.sh [--profile premium|dev|full] [opcoes]
+Uso: bash install.sh [--profile premium|dev-fullstack|full] [opcoes]
   --profile premium   KDE visual + Krema (alias: visual)
-  --profile dev       Java, Python, PHP e ferramentas basicas de desenvolvimento
-  --profile full      Premium + Dev
+  --profile dev-fullstack  Java, Python, PHP e ferramentas de desenvolvimento (alias: dev)
+  --profile full      Premium + Dev Fullstack
   --dry-run           Mostrar plano SEM modificar arquivos ou usar sudo
   --detect            Detectar a distro sem instalar
   --check-session     Diagnosticar acesso a KDE Wayland e sudo sem instalar
   --status            Listar perfis de instalacao registrados e pacotes atuais
   --list-profiles     Alias de --status (nao lista perfis visuais KDE)
-  --verify-profile N  Conferir pacotes atuais de premium, dev ou full
+  --verify-profile N  Conferir pacotes de premium, dev-fullstack ou full
   --yes               Confirmar etapas de instalacao explicitamente
   --with-node         Incluir Node.js e npm dos repositorios da distro
   --with-docker       Incluir Docker (se nao houver podman-docker)
@@ -105,7 +105,8 @@ if (( LIST_PROFILES )); then
   exit 0
 fi
 if [[ -n "$VERIFY_PROFILE" ]]; then
-  case "$VERIFY_PROFILE" in premium|dev|full) ;; *) die "Perfil invalido em --verify-profile." ;; esac
+  case "$VERIFY_PROFILE" in premium|dev|dev-fullstack|full) ;; *) die "Perfil invalido em --verify-profile." ;; esac
+  [[ "$VERIFY_PROFILE" != dev-fullstack ]] || VERIFY_PROFILE=dev
   record_file="$(install_status_root)/$VERIFY_PROFILE.state"
   prior_extras="$(install_status_read "$record_file" extras)"
   install_status_verify "$VERIFY_PROFILE" "${prior_extras:-none}"
@@ -127,23 +128,25 @@ if [[ -z "$PROFILE" ]]; then
   if (( DRY_RUN )); then
     PROFILE="full"
   else
-    [[ -t 0 ]] || die "Informe --profile premium|dev|full em execucao nao interativa."
-    printf '\nEscolha o perfil:\n  1) Premium (visual KDE + Krema)\n  2) Developer\n  3) Full (ambos)\n'
+    [[ -t 0 ]] || die "Informe --profile premium|dev-fullstack|full em execucao nao interativa."
+    printf '\nEscolha o perfil:\n  1) Premium (visual KDE + Krema)\n  2) Dev Fullstack\n  3) Full (ambos)\n'
     read -r -p 'Opcao [1/2/3]: ' escolha
-    case "$escolha" in 1) PROFILE=premium ;; 2) PROFILE=dev ;; 3) PROFILE=full ;; *) die "Opcao invalida." ;; esac
+    case "$escolha" in 1) PROFILE=premium ;; 2) PROFILE=dev-fullstack ;; 3) PROFILE=full ;; *) die "Opcao invalida." ;; esac
   fi
 fi
 [[ "$PROFILE" != "visual" ]] || PROFILE="premium"
+# Mantem "dev" como identificador interno para preservar registros dev.state antigos.
+[[ "$PROFILE" != "dev-fullstack" ]] || PROFILE="dev"
 case "$PROFILE" in premium|dev|full) ;; *) die "Perfil invalido: $PROFILE" ;; esac
 
 if [[ "$PROFILE" == premium ]] && (( WITH_NODE || WITH_DOCKER || WITH_DOTNET || WITH_VSCODE )); then
-  die "Extras dev exigem --profile dev ou --profile full."
+  die "Extras de desenvolvimento exigem --profile dev-fullstack ou --profile full."
 fi
 if [[ "$PROFILE" == dev ]] && (( WITH_VISUAL_PRESETS )); then
   die "--with-visual-presets exige --profile premium ou --profile full."
 fi
 
-info "Perfil: $PROFILE"
+info "Perfil: $([[ "$PROFILE" == dev ]] && printf dev-fullstack || printf %s "$PROFILE")"
 if (( DRY_RUN )); then
   info "SIMULACAO: nenhuma alteracao sera aplicada."
   if [[ "$PROFILE" != dev ]]; then
@@ -151,7 +154,7 @@ if (( DRY_RUN )); then
     info "Repositorio Krema: $([[ "$DISTRO_BACKEND" == debian ]] && echo 'OBS Debian_13' || echo 'PPA isac322/krema')"
   fi
   if [[ "$PROFILE" != premium ]]; then
-    info "Dev: Git, build-essential, Python 3, Java 21, Maven, PHP/Composer, ferramentas CLI"
+    info "Dev Fullstack: Git, build-essential, Python 3, Java 21, Maven, PHP/Composer, ferramentas CLI"
     info "Extras: node=$WITH_NODE docker=$WITH_DOCKER dotnet=$WITH_DOTNET vscode=$WITH_VSCODE"
     [[ "$WITH_DOTNET" -eq 0 || "$DISTRO_BACKEND" != debian ]] ||
       info "Dotnet no Debian: pacote oficial packages-microsoft-prod.deb"
