@@ -120,25 +120,26 @@ Os snapshots ficam em `~/.local/share/linux-hybrid/profiles/`, sem serem enviado
 
 ### Catálogo de perfis visuais
 
-O catálogo oferece quatro presets: `sweet-kde-videoyt`, `layan-minimalist-modern`, `breeze-escuro-dock` e `breeze-classico`. Instalar um preset registra sua configuração sem alterar o visual ativo. Para aplicar, use o gerenciador:
+O catálogo oferece cinco presets: `sweet-kde-videoyt`, `layan-minimalist-modern`, `catppuccin-mocha-videoyt`, `breeze-escuro-dock` e `breeze-classico`. Instalar um preset registra sua configuração sem alterar o visual ativo. Para aplicar, use o gerenciador:
 
 ```bash
 bash scripts/catalogo-visual-kde.sh listar
 bash scripts/catalogo-visual-kde.sh instalar layan-minimalist-modern
-bash scripts/perfis-kde.sh aplicar layan-minimalist-modern
+bash scripts/catalogo-visual-kde.sh instalar catppuccin-mocha-videoyt
+bash scripts/perfis-kde.sh aplicar catppuccin-mocha-videoyt
 bash scripts/perfis-kde.sh atual
 ```
 
-**Os quatro presets não são registrados automaticamente por padrão**. Para incluí-los na execução de Premium ou Full, use o opt-in:
+**Os cinco presets não são registrados automaticamente por padrão**. Para incluí-los na execução de Premium ou Full, use o opt-in:
 
 ```bash
 bash install.sh --profile full --with-visual-presets --dry-run
 bash install.sh --profile full --with-visual-presets
 ```
 
-O instalador pede confirmação adicional: registra os quatro perfis **sem aplicar nenhum**, preserva perfis existentes e instala recursos dos temas Sweet/Layan a partir de projetos de terceiros (inclusive executando o instalador do Layan como usuário comum). Também é possível registrar os perfis separadamente pelo catálogo. O perfil `dev` não instala presets visuais, mesmo com Flatpak e Discover disponíveis.
+O instalador pede confirmação adicional: registra os cinco perfis **sem aplicar nenhum**, preserva perfis existentes e instala recursos dos temas Sweet/Layan a partir de projetos de terceiros (inclusive executando o instalador do Layan como usuário comum). Também é possível registrar os perfis separadamente pelo catálogo. O perfil `dev` não instala presets visuais, mesmo com Flatpak e Discover disponíveis.
 
-A instalação dos temas de terceiros exige Git e internet; a dock Krema precisa estar instalada separadamente. O catálogo não publica snapshots pessoais e não garante reprodução pixel a pixel. Consulte [perfis KDE](docs/perfis-visuais.md) e [recursos visuais](docs/recursos-visuais.md) para detalhes e limitações.
+O perfil `catppuccin-mocha-videoyt` segue o vídeo [COMO DEIXAR SEU LINUX LINDO!](https://youtu.be/usXZBNjo8gI): Catppuccin Mocha Mauve, painel KDE superior e dock Krema inferior em ocultação automática. O wallpaper japonês do trem e os widgets/calendário do vídeo não são distribuídos pelo preset, pois sua origem e licença ainda não foram confirmadas. O perfil novo é registrado sem aplicar a sessão.\n\nA instalação dos temas de terceiros exige Git e internet; a dock Krema precisa estar instalada separadamente. O catálogo não publica snapshots pessoais e não garante reprodução pixel a pixel. Consulte [perfis KDE](docs/perfis-visuais.md) e [recursos visuais](docs/recursos-visuais.md) para detalhes e limitações.
 
 ## Atalhos do Windows no KDE
 
