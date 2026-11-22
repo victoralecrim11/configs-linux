@@ -7,7 +7,7 @@ flatpak_flathub_exists() {
 }
 setup_flatpak_discover() {
   local pkg
-  apt_install_safe "Flatpak e Discover (APT)" \
+  package_install_safe "Flatpak e Discover" \
     flatpak plasma-discover plasma-discover-backend-flatpak kde-config-flatpak
   for pkg in flatpak plasma-discover plasma-discover-backend-flatpak kde-config-flatpak; do
     has_package "$pkg" || die "Integracao Flatpak incompleta: pacote ausente: $pkg"
