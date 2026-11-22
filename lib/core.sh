@@ -107,4 +107,13 @@ apt_install_safe() {
   info "$label: instalando ${to_install[*]}"
   sudo apt-get install -y "${to_install[@]}" || die "Falha na instalacao de $label"
 }
-has_package() { dpkg-query -W -f='${Status}' "$1" 2>/dev/null | grep -q '^install ok installed$'; }
+has_package() {
+  local pkg
+  pkg="$(package_resolve "$1")"
+  if [[ "${DISTRO_BACKEND:-}" == cachyos ]]; then
+    pacman -Q "$pkg" >/dev/null 2>&1
+  else
+    dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q '^install ok installed
+
+  fi
+}
