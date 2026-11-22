@@ -6,10 +6,20 @@ install_krema() {
     return 0
   fi
   require_kde_wayland_session
-  confirm "Adicionar o repositorio de terceiros do Krema para $DISTRO_NAME?" ||
-    die "Instalacao do Krema nao autorizada."
+  if [[ "$DISTRO_BACKEND" != cachyos ]]; then
+    confirm "Adicionar o repositorio de terceiros do Krema para $DISTRO_NAME?" ||
+      die "Instalacao do Krema nao autorizada."
+  fi
 
   case "$DISTRO_BACKEND" in
+    cachyos)
+      # Krema no Arch e distribuido via AUR. Nunca executar como root.
+      aur_install_confirmed krema
+      command -v krema >/dev/null 2>&1 ||
+        die "Krema AUR nao foi instalado corretamente."
+      info "Krema instalado via AUR."
+      return 0
+      ;;
     ubuntu)
       apt_install_safe "Repositorio PPA" software-properties-common ca-certificates
       require_cmd add-apt-repository
@@ -61,7 +71,7 @@ install_krema() {
     *) die "Krema sem suporte para o backend $DISTRO_BACKEND." ;;
   esac
 
-  apt_install_safe "Dock Krema" krema
+  package_install_safe "Dock Krema" krema
   command -v krema >/dev/null 2>&1 ||
     die "Pacote Krema indisponivel ou nao instalado; painel KDE original preservado."
   info "Krema instalado."
