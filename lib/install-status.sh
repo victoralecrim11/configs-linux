@@ -53,9 +53,11 @@ install_status_check() {
   INSTALL_STATUS_MISSING=""
   while IFS= read -r pkg; do
     [[ -n "$pkg" && -z "${seen[$pkg]+x}" ]] || continue
+    pkg="$(package_resolve "$pkg")"
+    [[ -z "${seen[$pkg]+x}" ]] || continue
     seen["$pkg"]=1
     INSTALL_STATUS_TOTAL=$((INSTALL_STATUS_TOTAL+1))
-    if dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -qx 'install ok installed'; then
+    if has_package "$pkg"; then
       INSTALL_STATUS_PRESENT=$((INSTALL_STATUS_PRESENT+1))
     else
       if [[ -n "$INSTALL_STATUS_MISSING" ]]; then INSTALL_STATUS_MISSING+=","; fi
