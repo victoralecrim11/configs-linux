@@ -113,7 +113,6 @@ has_package() {
   if [[ "${DISTRO_BACKEND:-}" == cachyos ]]; then
     pacman -Q "$pkg" >/dev/null 2>&1
   else
-    dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q '^install ok installed
-
+    dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q '^install ok installed$'
   fi
 }
