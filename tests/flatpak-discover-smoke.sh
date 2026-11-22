@@ -32,8 +32,8 @@ source "$ROOT/lib/flatpak-discover.sh"
 info() { :; }
 die() { echo "$*" >&2; exit 1; }
 require_cmd() { command -v "$1" >/dev/null 2>&1; }
-apt_install_safe() {
-  [[ "$1" == "Flatpak e Discover (APT)" && "$#" -eq 5 ]] || return 1
+package_install_safe() {
+  [[ "$1" == "Flatpak e Discover" && "$#" -eq 5 ]] || return 1
   [[ "$2" == flatpak && "$3" == plasma-discover &&
      "$4" == plasma-discover-backend-flatpak && "$5" == kde-config-flatpak ]]
 }

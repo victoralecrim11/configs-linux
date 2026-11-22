@@ -2,7 +2,7 @@
 # Dependencias e preferencias comuns a todos os perfis.
 setup_common_desktop() {
   setup_flatpak_discover
-  apt_install_safe "Fontes comuns" fonts-firacode fonts-jetbrains-mono fonts-inter
+  package_install_safe "Fontes comuns" fonts-firacode fonts-jetbrains-mono fonts-inter
   if command -v fc-cache >/dev/null 2>&1; then fc-cache -f >/dev/null 2>&1 || warn "fc-cache falhou"; fi
   # Preferencias KDE sao por usuario e nao exigem root.
   if [[ "${XDG_CURRENT_DESKTOP:-}" == *KDE* || "${XDG_CURRENT_DESKTOP:-}" == *Plasma* ]]; then

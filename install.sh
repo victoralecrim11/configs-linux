@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Linux Hybrid Installer 2.0: detecao automatica e perfis modulares.
-# Suporte de instalacao: Ubuntu/Kubuntu 26.04 e Debian 13 com KDE Plasma.
+# Linux Hybrid Installer 3.0: Debian/Kubuntu + CachyOS com backend separado.
+# Suporte de instalacao: Ubuntu/Kubuntu 26.04, Debian 13 e CachyOS KDE.
 set -Eeuo pipefail
 
 PROJECT_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
@@ -8,6 +8,8 @@ PROJECT_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 source "$PROJECT_ROOT/lib/platform.sh"
 # shellcheck source=lib/core.sh
 source "$PROJECT_ROOT/lib/core.sh"
+# shellcheck source=lib/pacman.sh
+source "$PROJECT_ROOT/lib/pacman.sh"
 # shellcheck source=lib/install-status.sh
 source "$PROJECT_ROOT/lib/install-status.sh"
 # shellcheck source=lib/krema.sh
@@ -39,7 +41,7 @@ OS_RELEASE_FILE="/etc/os-release"
 
 help_text() {
   cat <<'HELP'
-Linux Hybrid Setup 2.0
+Linux Hybrid Setup 3.0
 Uso: bash install.sh [--profile premium|dev-fullstack|full] [opcoes]
   --profile premium   KDE visual + Krema (alias: visual)
   --profile dev-fullstack  Java, Python, PHP e ferramentas de desenvolvimento (alias: dev)
@@ -59,8 +61,8 @@ Uso: bash install.sh [--profile premium|dev-fullstack|full] [opcoes]
   --os-release FILE   Apenas com --dry-run: testar a deteccao com fixture
   -h, --help          Ajuda
 
-Suportadas: Kubuntu/Ubuntu 26.04 e Debian 13 (KDE Plasma 6 / Wayland para Premium).
-Outras distros: diagnosticadas, mas a instalacao fica BLOQUEADA.
+Suportadas: Kubuntu/Ubuntu 26.04, Debian 13 e CachyOS (KDE Plasma 6 / Wayland para Premium).
+Outras distros (inclusive Arch generico): diagnosticadas, mas instalacao BLOQUEADA.
 Os extras dev sao opcionais para evitar adicionar repositorios sem necessidade.
 Sem --profile, escolha interativa quando executado no terminal.
 HELP
@@ -122,7 +124,7 @@ if (( CHECK_SESSION )); then
   exit 1
 fi
 (( PLATFORM_OK )) ||
-  die "Distribuicao/versao nao homologada. Apenas Ubuntu 26.04 e Debian 13 sao permitidos na v2."
+  die "Distribuicao/versao nao homologada. Suportadas: Ubuntu/Kubuntu 26.04, Debian 13 e CachyOS."
 
 if [[ -z "$PROFILE" ]]; then
   if (( DRY_RUN )); then
@@ -151,10 +153,14 @@ if (( DRY_RUN )); then
   info "SIMULACAO: nenhuma alteracao sera aplicada."
   if [[ "$PROFILE" != dev ]]; then
     info "Premium: Papirus, Breeze Dark, wallpaper, painel superior, Krema"
-    info "Repositorio Krema: $([[ "$DISTRO_BACKEND" == debian ]] && echo 'OBS Debian_13' || echo 'PPA isac322/krema')"
+    case "$DISTRO_BACKEND" in
+      debian) info "Repositorio Krema: OBS Debian_13" ;;
+      ubuntu) info "Repositorio Krema: PPA isac322/krema" ;;
+      cachyos) info "Krema: AUR (paru/yay, consentimento e revisao do PKGBUILD)" ;;
+    esac
   fi
   if [[ "$PROFILE" != premium ]]; then
-    info "Dev Fullstack: Git, build-essential, Python 3, Java 21, Maven, PHP/Composer, ferramentas CLI"
+    info "Dev Fullstack: Git, toolchain de compilacao, Python 3, Java 21, Maven, PHP/Composer, CLI"
     info "Extras: node=$WITH_NODE docker=$WITH_DOCKER dotnet=$WITH_DOTNET vscode=$WITH_VSCODE"
     [[ "$WITH_DOTNET" -eq 0 || "$DISTRO_BACKEND" != debian ]] ||
       info "Dotnet no Debian: pacote oficial packages-microsoft-prod.deb"
@@ -165,15 +171,26 @@ if (( DRY_RUN )); then
   else
     info "Presets visuais nao sao registrados por padrao; use --with-visual-presets no Premium/Full."
   fi
-  info "Durante instalacao real: confirmacao, backup local, simulacao APT e bloqueio de remocoes."
+  if [[ "$DISTRO_BACKEND" == cachyos ]]; then
+    info "Instalacao real: confirmacao, backup, Pacman -Syu completo e revisao interativa de conflitos."
+  else
+    info "Instalacao real: confirmacao, backup, simulacao APT e bloqueio de remocoes."
+  fi
   exit 0
 fi
 
 [[ "$EUID" -ne 0 ]] || die "Nao execute com sudo bash. Use bash install.sh."
 require_cmd sudo
-require_cmd apt-get
-require_cmd dpkg-query
-require_cmd apt-cache
+case "$DISTRO_BACKEND" in
+  ubuntu|debian)
+    require_cmd apt-get
+    require_cmd dpkg-query
+    require_cmd apt-cache
+    ;;
+  cachyos)
+    require_cmd pacman
+    ;;
+esac
 require_cmd tee
 if [[ "$PROFILE" != dev ]]; then
   require_kde_wayland_session

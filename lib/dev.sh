@@ -5,10 +5,16 @@ setup_dotnet10() {
     info ".NET SDK 10 ja disponivel."
     return 0
   fi
+  if [[ "$DISTRO_BACKEND" == "cachyos" ]]; then
+    package_install_safe ".NET SDK 10" dotnet-sdk-10.0
+    dotnet --list-sdks 2>/dev/null | grep -q '^10\\.' ||
+      die ".NET SDK 10 nao foi encontrado apos instalar."
+    return 0
+  fi
   if [[ "$DISTRO_BACKEND" == "debian" ]]; then
     confirm "Adicionar repositorio Microsoft para .NET 10 no Debian 13?" ||
       die "Repositorio Microsoft nao autorizado."
-    apt_install_safe "Ferramentas de instalacao .NET" curl ca-certificates
+    package_install_safe "Ferramentas de instalacao .NET" curl ca-certificates
     local tmp pkg
     tmp="$(mktemp --suffix=.deb)"
     curl --fail --show-error --location --retry 2 \
@@ -21,19 +27,29 @@ setup_dotnet10() {
     rm -f -- "$tmp"
     APT_UPDATED=0
   fi
-  apt_install_safe ".NET SDK 10" dotnet-sdk-10.0
+  package_install_safe ".NET SDK 10" dotnet-sdk-10.0
   dotnet --list-sdks 2>/dev/null | grep -q '^10\.' ||
     warn ".NET 10 nao foi instalado; confira repositorios e arquitetura."
 }
 
 setup_vscode() {
+  if [[ "$DISTRO_BACKEND" == cachyos ]]; then
+    if has_package visual-studio-code-bin; then
+      info "VS Code Microsoft ja instalado via AUR."
+      return 0
+    fi
+    aur_install_confirmed visual-studio-code-bin
+    has_package visual-studio-code-bin ||
+      die "Pacote VS Code Microsoft nao encontrado apos AUR."
+    return 0
+  fi
   if command -v code >/dev/null 2>&1; then
     info "VS Code ja disponivel."
     return 0
   fi
   confirm "Adicionar repositorio da Microsoft para VS Code?" ||
     die "Repositorio VS Code nao autorizado."
-  apt_install_safe "Ferramentas de assinatura" curl gnupg ca-certificates
+  package_install_safe "Ferramentas de assinatura" curl gnupg ca-certificates
   if ! grep -Rqs 'packages.microsoft.com/repos/code' /etc/apt/sources.list.d/ /etc/apt/sources.list 2>/dev/null; then
     local temp arch
     temp="$(mktemp)"
@@ -50,7 +66,7 @@ setup_vscode() {
       die "Falha ao adicionar repositorio VS Code."
     APT_UPDATED=0
   fi
-  apt_install_safe "Visual Studio Code" code
+  package_install_safe "Visual Studio Code" code
 }
 
 setup_docker() {
@@ -58,7 +74,12 @@ setup_docker() {
     warn "podman-docker presente; nao instalarei Docker Engine para evitar conflitos."
     return
   fi
-  apt_install_safe "Docker Engine distro" docker.io
+  package_install_safe "Docker Engine distro" docker.io
+  if [[ "$DISTRO_BACKEND" == cachyos ]]; then
+    package_install_safe "Docker Compose" docker-compose
+    info "Docker: serviço nao ativado automaticamente; execute sudo systemctl enable --now docker se desejar."
+    return 0
+  fi
   local compose="" candidate p
   for p in docker-compose-v2 docker-compose-plugin docker-compose; do
     candidate="$(LC_ALL=C apt-cache policy "$p" 2>/dev/null | awk '/Candidate:/{print $2;exit}')"
@@ -68,7 +89,7 @@ setup_docker() {
   done
   # Alternativa portavel: Debian usa docker-compose-plugin ou docker-compose-v2
   if [[ -n "$compose" ]]; then
-    apt_install_safe "Docker Compose" "$compose"
+    package_install_safe "Docker Compose" "$compose"
   else
     warn "Docker Compose nao identificado; instale separadamente de fonte confiavel."
   fi
@@ -77,13 +98,13 @@ setup_docker() {
 
 setup_developer() {
   info "Preparando ferramentas Developer no $DISTRO_NAME"
-  apt_install_safe "Developer (APT)" \
+  package_install_safe "Developer" \
     build-essential git curl wget ca-certificates unzip jq \
     python3 python3-pip python3-venv pipx \
     openjdk-21-jdk maven \
     php-cli php-mbstring php-xml php-curl composer
 
-  (( WITH_NODE )) && apt_install_safe "Node.js (pacotes da distribuicao)" nodejs npm
+  (( WITH_NODE )) && package_install_safe "Node.js (pacotes da distribuicao)" nodejs npm
   (( WITH_DOCKER )) && setup_docker
   (( WITH_DOTNET )) && setup_dotnet10
   (( WITH_VSCODE )) && setup_vscode

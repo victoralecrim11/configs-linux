@@ -35,7 +35,8 @@ detect_platform() {
       [[ "$DISTRO_VERSION" == 13 || "$DISTRO_VERSION" == 13.* ]] && DISTRO_BACKEND="debian"
       ;;
     fedora) DISTRO_FAMILY="dnf" ;;
-    arch|cachyos|manjaro|endeavouros) DISTRO_FAMILY="pacman" ;;
+    cachyos) DISTRO_FAMILY="pacman"; DISTRO_BACKEND="cachyos" ;;
+    arch|manjaro|endeavouros) DISTRO_FAMILY="pacman" ;;
     opensuse*|sles) DISTRO_FAMILY="zypper" ;;
     *)
       case " $ID_LIKE " in

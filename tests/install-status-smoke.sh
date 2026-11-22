@@ -19,6 +19,8 @@ cat > "$TMP/mock/krema" <<'SH'
 exit 0
 SH
 chmod +x "$TMP/mock/"*
+source "$PROJECT_ROOT/lib/core.sh"
+source "$PROJECT_ROOT/lib/pacman.sh"
 source "$PROJECT_ROOT/lib/install-status.sh"
 DISTRO_ID=debian
 DISTRO_VERSION=13

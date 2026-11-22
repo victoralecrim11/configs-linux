@@ -38,7 +38,7 @@ setup_premium() {
   require_cmd kwriteconfig6
   [[ -s "${XDG_CONFIG_HOME:-$HOME/.config}/plasma-org.kde.plasma.desktop-appletsrc" ]] ||
     die "Faca login no KDE e aguarde a criacao do painel antes de instalar Premium."
-  apt_install_safe "Premium (APT)" papirus-icon-theme fonts-firacode btop fastfetch \
+  package_install_safe "Premium" papirus-icon-theme fonts-firacode btop fastfetch \
     python3 librsvg2-bin curl ca-certificates
   # Salva o painel original na primeira instalacao, sem sobrescrever backups previos.
   if [[ ! -f "${XDG_DATA_HOME:-$HOME/.local/share}/kubuntu-hybrid/perfis-alternancia/original/.snapshot" ]]; then
