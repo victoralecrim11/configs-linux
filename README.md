@@ -75,7 +75,7 @@ bash install.sh --profile dev-fullstack --dry-run
 bash install.sh --profile dev-fullstack
 ```
 
-O perfil `dev-fullstack` usa apenas pacotes oficiais. Os perfis `premium` e `full` precisam da dock **Krema**: no CachyOS, ela vem do **AUR**, exigindo `paru` ou `yay`, autorização adicional e revisão do PKGBUILD. Se não houver helper, a instalação interrompe a etapa visual sem tentar instalar código de terceiros silenciosamente. O extra `--with-vscode` instala o VS Code da Microsoft via `visual-studio-code-bin` (AUR); `--with-dotnet` usa o pacote oficial `dotnet-sdk-10.0`. As ferramentas e configurações KDE devem ser validadas em uma VM antes de usar no ambiente principal.
+O perfil `dev-fullstack` usa apenas pacotes oficiais. Os perfis `premium` e `full` precisam da dock **Krema**: no CachyOS, ela vem do **AUR**, exigindo `paru` ou `yay`, autorização adicional e revisão do PKGBUILD. Se não houver helper, o script oferece instalar `paru` pelos repositórios oficiais com autorização; em seguida pede confirmação específica para acessar o AUR e orienta revisar o PKGBUILD. Nunca executa o AUR silenciosamente. O extra `--with-vscode` instala o VS Code da Microsoft via `visual-studio-code-bin` (AUR); `--with-dotnet` usa o pacote oficial `dotnet-sdk-10.0`. As ferramentas e configurações KDE devem ser validadas em uma VM antes de usar no ambiente principal.
 
 Os perfis KDE são independentes dos perfis de instalação e os snapshots pessoais não são enviados ao GitHub. Os resultados do CachyOS ainda dependem de validação real em sua VM.
 
