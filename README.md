@@ -4,33 +4,47 @@ Scripts para preparar e personalizar o KDE Plasma 6 no **Debian 13**, **Kubuntu/
 
 ## Instalação rápida
 
-Execute no terminal da sua sessão KDE, como **usuário normal**:
+O projeto **não é instalado pela loja de aplicativos**: você clona o repositório com Git e executa `install.sh` no terminal **como usuário normal**. Use o procedimento da sua distribuição, sempre após concluir a instalação do Linux e iniciar uma sessão KDE Plasma.
+
+### Debian 13 / Kubuntu 26.04
 
 ```bash
-# Debian/Kubuntu:
-sudo apt update && sudo apt install -y git
-# CachyOS, em vez do APT:
-# sudo pacman -Syu --needed git
+sudo apt update
+sudo apt install -y git
 
+cd "$HOME"
 git clone https://github.com/victoralecrim11/configs-linux.git
 cd configs-linux
 ```
 
-Se já possui o repositório:
+### CachyOS KDE (Pacman)
 
 ```bash
-cd ~/configs-linux
+# Atualiza o sistema e instala o Git
+sudo pacman -Syu --needed git
+
+# Baixa o instalador da branch principal
+cd "$HOME"
+git clone https://github.com/victoralecrim11/configs-linux.git
+cd configs-linux
+```
+
+**Já clonou o projeto?** Não faça outro clone. Atualize os arquivos no diretório existente:
+
+```bash
+cd "$HOME/configs-linux"
 git pull --ff-only
 ```
 
-Confira a distribuição e o acesso ao KDE Wayland antes de instalar:
+Em qualquer uma das distribuições suportadas, confira a detecção e faça uma simulação **sem instalar nada**:
 
 ```bash
 bash install.sh --detect
 bash install.sh --check-session
+bash install.sh --profile full --dry-run
 ```
 
-Escolha um perfil, simule e depois instale:
+Escolha **apenas o perfil que deseja instalar**:
 
 | Perfil | O que instala | Comando |
 | --- | --- | --- |
@@ -38,17 +52,83 @@ Escolha um perfil, simule e depois instale:
 | **Dev Fullstack** | Git, Java, Python, PHP, Composer e ferramentas de desenvolvimento | `bash install.sh --profile dev-fullstack` |
 | **Full** | Premium + Dev Fullstack | `bash install.sh --profile full` |
 
-```bash
-# Recomendado antes da execução real
-bash install.sh --profile full --dry-run
+O instalador solicita `sudo` quando necessário. **Nunca execute `sudo bash install.sh`**. Os perfis Premium e Full exigem KDE Plasma em sessão Wayland. Para instalar Node.js, Docker, .NET ou VS Code, use as opções `--with-node`, `--with-docker`, `--with-dotnet` e `--with-vscode` (somente Dev Fullstack ou Full). Veja [o guia completo](docs/instalacao.md).
 
-# Instalação de exemplo
-bash install.sh --profile full
+### Instalação passo a passo no CachyOS
+
+Se você acabou de instalar o CachyOS (inclusive numa VM), conclua primeiro o instalador gráfico, reinicie, remova a ISO virtual se necessário e **entre na sua conta do sistema instalado**, não em `liveuser`. Abra o **Konsole**.
+
+**1. Instale o Git e clone o projeto.** Execute o bloco `CachyOS KDE (Pacman)` acima. Como o suporte já está na `main`, não é necessário selecionar uma branch de desenvolvimento.
+
+**2. Confirme a detecção.**
+
+```bash
+cd "$HOME/configs-linux"
+bash install.sh --detect
 ```
 
-O instalador solicita permissões `sudo` quando necessário. **Não execute com `sudo bash install.sh`**. Os perfis Premium e Full exigem KDE Plasma em sessão Wayland.
+A saída deve mostrar `Familia: pacman` e `Backend: cachyos`. Se aparecer `nao homologado`, **não prossiga**.
 
-Os extras do Dev Fullstack são opcionais: `--with-node`, `--with-docker`, `--with-dotnet` e `--with-vscode`. Consulte [todas as opções](docs/instalacao.md).
+**3. Confira a sessão KDE e simule o perfil desejado.**
+
+```bash
+bash install.sh --check-session
+bash install.sh --profile dev-fullstack --dry-run
+# Para conferir os dois perfis juntos:
+bash install.sh --profile full --dry-run
+```
+
+O `--dry-run` apenas exibe o plano: não instala pacotes e não modifica o KDE. Os perfis Premium/Full requerem **Wayland**; o Dev Fullstack pode ser instalado sem esses ajustes visuais.
+
+**4. Instale um perfil (escolha uma opção).**
+
+```bash
+# Somente ferramentas de desenvolvimento (recomendado como primeiro teste na VM)
+bash install.sh --profile dev-fullstack
+
+# OU somente personalização KDE + Krema
+# bash install.sh --profile premium
+
+# OU os dois conjuntos de recursos
+# bash install.sh --profile full
+```
+
+As duas alternativas comentadas são comandos opcionais: **remova o `#` apenas da opção escolhida**. O backend usa Pacman, com atualização completa na primeira transação necessária. Leia e confirme as operações do gerenciador de pacotes.
+
+**5. Extras opcionais (somente Dev Fullstack/Full).**
+
+```bash
+# Simulação com Node, Docker, .NET 10 e VS Code
+bash install.sh --profile dev-fullstack --with-node --with-docker --with-dotnet --with-vscode --dry-run
+
+# Instalação real, se você quiser os quatro extras
+bash install.sh --profile dev-fullstack --with-node --with-docker --with-dotnet --with-vscode
+```
+
+O VS Code da Microsoft utiliza `visual-studio-code-bin` no **AUR**. A dock Krema, necessária para Premium/Full, também depende do AUR. Se `paru`/`yay` não estiver disponível, o instalador oferece instalar `paru` pelo repositório configurado; o uso do AUR exige **autorização adicional** e revisão do PKGBUILD. Não aceite instruções ou pacotes de terceiros sem conferir a origem.
+
+**6. Verifique o resultado e explore os perfis visuais.**
+
+```bash
+bash install.sh --status
+bash install.sh --verify-profile dev-fullstack
+bash scripts/perfis-kde.sh listar
+bash scripts/catalogo-visual-kde.sh listar
+```
+
+Para conferir outro perfil, substitua `dev-fullstack` por `premium` ou `full` em `--verify-profile`. Os cinco presets visuais são **opcionais** e não são ativados automaticamente:
+
+```bash
+# Somente Premium/Full: simule e registre os presets sem aplicá-los
+bash install.sh --profile premium --with-visual-presets --dry-run
+bash install.sh --profile premium --with-visual-presets
+
+# Depois, escolha um visual explicitamente
+bash scripts/perfis-kde.sh aplicar layan-minimalist-modern --dry-run
+bash scripts/perfis-kde.sh aplicar layan-minimalist-modern
+```
+
+**Dica para VirtualBox:** crie um snapshot da VM antes dos perfis Premium/Full. A instalação real pode alterar painéis, decoração, efeitos e wallpaper. Os testes automatizados não substituem a validação visual na sua versão do Plasma.
 
 ### Flatpak, Flathub e Discover
 
@@ -62,22 +142,11 @@ flatpak remotes --show-details
 
 Feche e reabra o Discover; faça logout/login (ou reinicie) se os apps Flatpak ainda não aparecerem. A verificação `--verify-profile` confere pacotes, não o remoto Flathub nem a interface gráfica. Consulte [o guia de instalação](docs/instalacao.md).
 
-### CachyOS (Arch/Pacman)
+### Notas sobre pacotes no CachyOS
 
-O backend CachyOS utiliza **Pacman** para pacotes oficiais e uma atualização completa `pacman -Syu` na primeira transação, sem `pacman -Sy` isolado. A instalação exige que você revise as solicitações do Pacman; `--yes` não ignora suas confirmações. **Arch Linux genérico não está homologado**.
+O backend CachyOS instala pacotes oficiais via **Pacman** e evita o uso isolado de `pacman -Sy` (atualizações parciais). `--yes` não ignora as confirmações do Pacman nem as autorizações exigidas para o AUR. **Arch Linux genérico não é uma distribuição homologada por este instalador.**
 
-```bash
-sudo pacman -Syu --needed git
-git clone https://github.com/victoralecrim11/configs-linux.git
-cd configs-linux
-bash install.sh --detect
-bash install.sh --profile dev-fullstack --dry-run
-bash install.sh --profile dev-fullstack
-```
-
-O perfil `dev-fullstack` usa apenas pacotes oficiais. Os perfis `premium` e `full` precisam da dock **Krema**: no CachyOS, ela vem do **AUR**, exigindo `paru` ou `yay`, autorização adicional e revisão do PKGBUILD. Se não houver helper, o script oferece instalar `paru` pelos repositórios oficiais com autorização; em seguida pede confirmação específica para acessar o AUR e orienta revisar o PKGBUILD. Nunca executa o AUR silenciosamente. O extra `--with-vscode` instala o VS Code da Microsoft via `visual-studio-code-bin` (AUR); `--with-dotnet` usa o pacote oficial `dotnet-sdk-10.0`. As ferramentas e configurações KDE devem ser validadas em uma VM antes de usar no ambiente principal.
-
-Os perfis KDE são independentes dos perfis de instalação e os snapshots pessoais não são enviados ao GitHub. Os resultados do CachyOS ainda dependem de validação real em sua VM.
+No CachyOS, o script mapeia nomes de pacotes APT para equivalentes Pacman, integra Flatpak/Discover, utiliza `dotnet-sdk-10.0` para .NET 10 e solicita confirmação para o uso do AUR com Krema ou VS Code. Os perfis visuais KDE são separados dos perfis de instalação, e os snapshots pessoais permanecem locais.
 
 ## Perfis de instalação e status
 
@@ -234,7 +303,7 @@ bash scripts/aplicar-comum-kde.sh
 
 **Nota:** as fontes Inter e JetBrains Mono podem estar instaladas somente
 no diretório do usuário se não houve acesso administrativo; ao executar
-qualquer perfil de instalação, o APT instala os três pacotes globalmente.
+qualquer perfil de instalação, o gerenciador da distribuição instala os pacotes de fontes globalmente, conforme sua disponibilidade.
 Os atalhos de lançadores no Plasma 6 Wayland exigem confirmação visual
 em Configurações do Sistema → Atalhos, possivelmente após novo login.
 
