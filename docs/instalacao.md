@@ -95,7 +95,7 @@ No CachyOS, inicie com `sudo pacman -Syu --needed git`, clone o repositório e r
 
 Os nomes dos pacotes são traduzidos internamente (ex.: `build-essential` → `base-devel`, `openjdk-21-jdk` → `jdk21-openjdk`, `fonts-inter` → `inter-font`, `plasma-discover` → `discover`). Verificação de status usa `pacman -Q`, não `dpkg-query`.
 
-Os perfis **premium** e **full** requerem Krema do AUR, segundo instruções oficiais do projeto. Para isso, tenha `paru` ou `yay` disponível, revise a receita PKGBUILD e aceite a confirmação adicional. O script aborta a etapa da Krema se não houver helper. O extra `--with-vscode` também depende do AUR; os extras `--with-dotnet`, `--with-node` e `--with-docker` usam pacotes dos repositórios oficiais. A execução do instalador nunca é feita com `sudo bash`; `sudo` é pedido somente para o Pacman.
+Os perfis **premium** e **full** requerem Krema do AUR, segundo instruções oficiais do projeto. Para isso, tenha `paru` ou `yay` disponível, revise a receita PKGBUILD e aceite a confirmação adicional. Se não houver helper, o script oferece instalar `paru` pelos repositórios oficiais mediante confirmação e interrompe o processo caso você recuse. O acesso ao AUR requer uma segunda confirmação. O extra `--with-vscode` também depende do AUR; os extras `--with-dotnet`, `--with-node` e `--with-docker` usam pacotes dos repositórios oficiais. A execução do instalador nunca é feita com `sudo bash`; `sudo` é pedido somente para o Pacman.
 
 O status confirma presença de **pacotes** e execução registrada, não garante que a dock, o painel ou um tema funcionem perfeitamente na versão atual do Plasma. Faça snapshot da VM antes de testar `premium` e `full`.
 
