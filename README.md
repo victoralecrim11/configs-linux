@@ -1,14 +1,16 @@
 # Configs Linux — KDE Plasma
 
-Scripts para preparar e personalizar o KDE Plasma 6 no **Debian 13** e no **Kubuntu/Ubuntu 26.04 LTS**. Inclui instalação de ferramentas, temas, barra de tarefas e gerenciamento de perfis visuais com backup.
+Scripts para preparar e personalizar o KDE Plasma 6 no **Debian 13**, **Kubuntu/Ubuntu 26.04 LTS** e **CachyOS** (Pacman). Inclui instalação de ferramentas, temas, barra de tarefas e gerenciamento de perfis visuais com backup.
 
 ## Instalação rápida
 
 Execute no terminal da sua sessão KDE, como **usuário normal**:
 
 ```bash
-sudo apt update
-sudo apt install -y git
+# Debian/Kubuntu:
+sudo apt update && sudo apt install -y git
+# CachyOS, em vez do APT:
+# sudo pacman -Syu --needed git
 
 git clone https://github.com/victoralecrim11/configs-linux.git
 cd configs-linux
@@ -50,7 +52,7 @@ Os extras do Dev Fullstack são opcionais: `--with-node`, `--with-docker`, `--wi
 
 ### Flatpak, Flathub e Discover
 
-**Todos os perfis de instalação** agora incluem `flatpak`, `plasma-discover`, `plasma-discover-backend-flatpak` e `kde-config-flatpak`. O instalador adiciona **Flathub para o usuário atual**, se ainda não existir como remoto de usuário ou sistema, sem sobrescrever nem duplicar configurações. Assim, aplicativos Flatpak ficam disponíveis no Discover. A instalação não baixa aplicativos do Flathub automaticamente.
+**Todos os perfis de instalação** incluem Flatpak e KDE Discover. No Debian/Kubuntu, os pacotes são `flatpak`, `plasma-discover`, `plasma-discover-backend-flatpak`, `kde-config-flatpak`; no CachyOS, `flatpak`, `discover` (backend Flatpak incluído) e `flatpak-kcm`. O instalador adiciona **Flathub para o usuário atual**, se ainda não existir como remoto de usuário ou sistema, sem sobrescrever nem duplicar configurações. Assim, aplicativos Flatpak ficam disponíveis no Discover. A instalação não baixa aplicativos do Flathub automaticamente.
 
 ```bash
 # Conferir os pacotes e a fonte Flathub depois de instalar
@@ -59,6 +61,23 @@ flatpak remotes --show-details
 ```
 
 Feche e reabra o Discover; faça logout/login (ou reinicie) se os apps Flatpak ainda não aparecerem. A verificação `--verify-profile` confere pacotes, não o remoto Flathub nem a interface gráfica. Consulte [o guia de instalação](docs/instalacao.md).
+
+### CachyOS (Arch/Pacman)
+
+O backend CachyOS utiliza **Pacman** para pacotes oficiais e uma atualização completa `pacman -Syu` na primeira transação, sem `pacman -Sy` isolado. A instalação exige que você revise as solicitações do Pacman; `--yes` não ignora suas confirmações. **Arch Linux genérico não está homologado**.
+
+```bash
+sudo pacman -Syu --needed git
+git clone https://github.com/victoralecrim11/configs-linux.git
+cd configs-linux
+bash install.sh --detect
+bash install.sh --profile dev-fullstack --dry-run
+bash install.sh --profile dev-fullstack
+```
+
+O perfil `dev-fullstack` usa apenas pacotes oficiais. Os perfis `premium` e `full` precisam da dock **Krema**: no CachyOS, ela vem do **AUR**, exigindo `paru` ou `yay`, autorização adicional e revisão do PKGBUILD. Se não houver helper, a instalação interrompe a etapa visual sem tentar instalar código de terceiros silenciosamente. O extra `--with-vscode` instala o VS Code da Microsoft via `visual-studio-code-bin` (AUR); `--with-dotnet` usa o pacote oficial `dotnet-sdk-10.0`. As ferramentas e configurações KDE devem ser validadas em uma VM antes de usar no ambiente principal.
+
+Os perfis KDE são independentes dos perfis de instalação e os snapshots pessoais não são enviados ao GitHub. Os resultados do CachyOS ainda dependem de validação real em sua VM.
 
 ## Perfis de instalação e status
 
@@ -83,7 +102,7 @@ Os registros são locais e não são enviados ao GitHub: `~/.local/state/linux-h
 
 ### Qual perfil visual está ativo agora?
 
-No terminal do Debian/Kubuntu, execute:
+No terminal do Debian/Kubuntu/CachyOS, execute:
 
 ```bash
 cd ~/configs-linux
@@ -199,7 +218,7 @@ O painel aparece ao tocar a borda em que está posicionado. Caso Nuvole não sej
 ### Fontes comuns a todos os perfis
 
 Todos os perfis de instalação instalam **Fira Code**, **JetBrains Mono** e
-**Inter** pelo APT. No KDE Plasma, a interface usa Inter e a fonte
+**Inter** pelo gerenciador da distribuição (APT no Debian/Kubuntu; Pacman no CachyOS). No KDE Plasma, a interface usa Inter e a fonte
 monoespaçada padrão usa JetBrains Mono. Fira Code fica instalada para os
 editores/IDEs (configurar a preferência de cada editor separadamente).
 Os atalhos comuns ficam em `scripts/atalhos-windows-kde.sh`, com backups
