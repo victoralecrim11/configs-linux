@@ -91,6 +91,7 @@ aur_install_confirmed() {
   fi
   confirm "Instalar '$pkg' pelo AUR com $helper? Confira o PKGBUILD e as perguntas do helper." ||
     die "Instalacao AUR nao autorizada."
+  package_install_safe "Dependencias para compilar pacotes AUR" base-devel git
   "$helper" -S --needed "$pkg" ||
     die "Falha ou cancelamento da instalacao AUR ($pkg)."
 }
