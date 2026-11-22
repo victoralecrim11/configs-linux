@@ -2,9 +2,9 @@
 
 Documentação ampliada dos perfis de instalação. Consulte também [Status de instalação](status-instalacao.md), [Problemas comuns](solucao-de-problemas.md) e o [README principal](../README.md).
 
-## Comece aqui: instalador universal v2
+## Comece aqui: instalador multidistro v3
 
-O instalador `install.sh` **detecta automaticamente a distribuição** usando `/etc/os-release`. Na versão 2, a instalação é habilitada apenas no **Kubuntu/Ubuntu 26.04** e no **Debian 13 com KDE Plasma 6**. Fedora, CachyOS, Arch e openSUSE podem ser identificados, mas **não recebem instalações automáticas ainda**.
+O instalador `install.sh` **detecta automaticamente a distribuição** usando `/etc/os-release`. Na versão 3, a instalação está disponível para **Kubuntu/Ubuntu 26.04**, **Debian 13** e **CachyOS com KDE Plasma 6**. Arch genérico, Fedora e openSUSE podem ser detectados, mas continuam bloqueados.
 
 
 ### Instalação do zero
@@ -14,6 +14,7 @@ Após instalar a distro e fazer o primeiro login no KDE Plasma, abra o Konsole:
 ```bash
 sudo apt update
 sudo apt install -y git
+# CachyOS: substitua os comandos acima por sudo pacman -Syu --needed git
 cd "$HOME"
 git clone https://github.com/victoralecrim11/configs-linux.git
 cd configs-linux
@@ -65,14 +66,14 @@ bash install.sh --profile full --with-node --with-docker --with-dotnet --with-vs
 
 - `--with-node`: instala Node.js e npm da distribuição.
 - `--with-docker`: tenta Docker do repositório da distro, sem remover Podman automaticamente.
-- `--with-dotnet`: instala SDK .NET 10; no Debian, usa o feed oficial Microsoft com confirmação.
-- `--with-vscode`: usa o repositório oficial Microsoft para VS Code após confirmação.
+- `--with-dotnet`: instala SDK .NET 10; no Debian, usa o feed oficial Microsoft com confirmação; no CachyOS, `dotnet-sdk-10.0` do Pacman.
+- `--with-vscode`: no Debian/Kubuntu, usa o repositório oficial Microsoft para VS Code após confirmação; no CachyOS, `visual-studio-code-bin` no AUR (helper paru/yay e consentimento).
 
 Os extras **não** são instalados implicitamente no perfil Dev ou Full. Isso evita adicionar serviços e repositórios que você talvez não queira. Pacotes indisponíveis são informados e instalações APT com remoção de dependências são bloqueadas.
 
 ### Flatpak/Flathub integrado ao KDE Discover (padrão)
 
-Todo perfil (`dev-fullstack`, `premium`, `full`) instala pelo APT: `flatpak`, `plasma-discover`, `plasma-discover-backend-flatpak` e `kde-config-flatpak`. Depois, o script detecta se o remoto `flathub` já existe no escopo do usuário ou do sistema. Se não existir em nenhum deles, adiciona-o **somente ao usuário atual** com:
+Todo perfil (`dev-fullstack`, `premium`, `full`) instala Flatpak e Discover. No Debian/Kubuntu: `flatpak`, `plasma-discover`, `plasma-discover-backend-flatpak`, `kde-config-flatpak`. No CachyOS: `flatpak`, `discover` (backend Flatpak integrado) e `flatpak-kcm`. Depois, o script detecta se o remoto `flathub` já existe no escopo do usuário ou do sistema. Se não existir em nenhum deles, adiciona-o **somente ao usuário atual** com:
 
 ```bash
 flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
@@ -82,10 +83,21 @@ A configuração é idempotente e não instala apps Flatpak automaticamente. O D
 
 ```bash
 flatpak remotes --show-details
-dpkg-query -W flatpak plasma-discover plasma-discover-backend-flatpak kde-config-flatpak
+# Debian/Kubuntu: dpkg-query -W flatpak plasma-discover plasma-discover-backend-flatpak kde-config-flatpak
+# CachyOS: pacman -Q flatpak discover flatpak-kcm
 ```
 
 O rastreador de perfis valida a **presença dos pacotes**, não se a fonte Flathub aparece visualmente no Discover. Se a rede falhar durante a configuração do remoto, a instalação retorna erro e a falha é registrada.
+
+### CachyOS: primeira execução e cuidados com AUR
+
+No CachyOS, inicie com `sudo pacman -Syu --needed git`, clone o repositório e rode `bash install.sh --detect` seguido de `bash install.sh --profile dev-fullstack --dry-run`. A primeira transação real do instalador realiza **upgrade completo com Pacman** antes de instalar os pacotes solicitados. Não há `pacman -Sy` isolado nem instalação automática de AUR para o perfil de desenvolvimento básico.
+
+Os nomes dos pacotes são traduzidos internamente (ex.: `build-essential` → `base-devel`, `openjdk-21-jdk` → `jdk21-openjdk`, `fonts-inter` → `inter-font`, `plasma-discover` → `discover`). Verificação de status usa `pacman -Q`, não `dpkg-query`.
+
+Os perfis **premium** e **full** requerem Krema do AUR, segundo instruções oficiais do projeto. Para isso, tenha `paru` ou `yay` disponível, revise a receita PKGBUILD e aceite a confirmação adicional. O script aborta a etapa da Krema se não houver helper. O extra `--with-vscode` também depende do AUR; os extras `--with-dotnet`, `--with-node` e `--with-docker` usam pacotes dos repositórios oficiais. A execução do instalador nunca é feita com `sudo bash`; `sudo` é pedido somente para o Pacman.
+
+O status confirma presença de **pacotes** e execução registrada, não garante que a dock, o painel ou um tema funcionem perfeitamente na versão atual do Plasma. Faça snapshot da VM antes de testar `premium` e `full`.
 
 ### Presets visuais (opcionais, Premium/Full)
 
@@ -110,7 +122,7 @@ bash scripts/alternar-barra-kde.sh personalizada
 bash scripts/alternar-barra-kde.sh backup
 ```
 
-A alternância controla o painel e a dock Krema, mas **não desinstala ferramentas Dev Fullstack**. A reinstalação do Krema usa PPA no Ubuntu 26.04 e OBS assinado por chave dedicada no Debian 13. Em uma instalação nova, faça logout/login caso os efeitos ainda não estejam visíveis.
+A alternância controla o painel e a dock Krema, mas **não desinstala ferramentas Dev Fullstack**. A reinstalação do Krema usa PPA no Ubuntu 26.04, OBS assinado no Debian 13 e AUR (paru/yay, com confirmação) no CachyOS. Em uma instalação nova, faça logout/login caso os efeitos ainda não estejam visíveis.
 
 
 ### Atualizar os scripts
@@ -131,22 +143,23 @@ bash install.sh --profile premium --dry-run
 bash install.sh --profile dev-fullstack --dry-run
 ```
 
-Os testes verificam sintaxe e seleção de distro/perfil **sem instalar pacotes**. A primeira instalação real da v2 no Debian 13 e em Kubuntu 26.04 deve ser validada em VM ou ambiente descartável antes de usar na máquina principal. A lógica de pacotes é baseada em listas revisadas e fontes oficiais do projeto; o instalador **não pesquisa e executa comandos arbitrários da internet**.
+Os testes verificam sintaxe e seleção de distro/perfil **sem instalar pacotes**. A primeira instalação real em cada sistema, especialmente CachyOS com AUR/Krema, deve ser validada em VM ou ambiente descartável antes de usar na máquina principal. A lógica de pacotes é baseada em listas revisadas e fontes oficiais do projeto; o instalador **não pesquisa e executa comandos arbitrários da internet**.
 
 
 ### Projetos de suporte futuro
 
-Fedora (DNF), CachyOS/Arch (Pacman/AUR) e openSUSE (Zypper/OBS) possuem detecção de família no módulo `lib/platform.sh`, mas **não possuem backend de instalação homologado**. O instalador interrompe a instalação nesses sistemas para proteger o ambiente.
+Fedora (DNF), Arch genérico (Pacman) e openSUSE (Zypper/OBS) possuem detecção de família, mas **continuam sem backend homologado**. CachyOS usa o backend `lib/pacman.sh`. O instalador interrompe a instalação nesses sistemas para proteger o ambiente.
 
 ---
 
 ## Estrutura
 
 ```text
-install.sh                       # Entrada unica v2; detecta a distro e o perfil
+install.sh                       # Entrada unica v3; detecta a distro e o perfil
 lib/
 ├── platform.sh                 # Deteccao de distro/versao/familia
-├── core.sh                     # Backups, confirmacoes e seguranca APT
+├── core.sh                     # Backups, confirmacoes e instalacao APT
+├── pacman.sh                   # Pacotes, seguranca e mapeamento CachyOS
 ├── krema.sh                    # Krema: PPA Ubuntu 26.04 / OBS Debian 13
 ├── premium.sh                  # Tema KDE + wallpaper + dock
 └── dev.sh                      # Pacotes Developer e extras opt-in
@@ -165,7 +178,7 @@ tests/
 
 ## Requisitos
 
-- Kubuntu/Ubuntu 26.04 com KDE Plasma 6.
+- Kubuntu/Ubuntu 26.04, Debian 13 ou CachyOS com KDE Plasma 6.
 - Sessão KDE Wayland para recursos da dock.
 - Bash, systemd e acesso administrativo **apenas quando solicitado pelo instalador**.
 - Revise os scripts e seus repositórios externos antes da execução.
