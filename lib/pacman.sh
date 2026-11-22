@@ -82,7 +82,12 @@ aur_install_confirmed() {
   elif command -v yay >/dev/null 2>&1; then
     helper=yay
   else
-    die "Instale/revise um helper AUR (paru ou yay) antes de usar o pacote comunitario '$pkg'."
+    confirm "O CachyOS nao possui paru/yay instalado. Instalar paru pelo repositorio oficial antes de acessar o AUR?" ||
+      die "Sem helper AUR; etapa '$pkg' cancelada."
+    package_install_safe "Helper AUR (repositorio CachyOS)" paru
+    command -v paru >/dev/null 2>&1 ||
+      die "Paru nao encontrado apos instalacao pelo Pacman."
+    helper=paru
   fi
   confirm "Instalar '$pkg' pelo AUR com $helper? Confira o PKGBUILD e as perguntas do helper." ||
     die "Instalacao AUR nao autorizada."
