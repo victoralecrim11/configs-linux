@@ -89,6 +89,7 @@ if bash "$ROOT/install.sh" --profile dev-fullstack --yes --os-release "$ROOT/tes
   echo "[ERRO] override de OS permitido em instalacao real." >&2; exit 1
 fi
 echo "[OK] override de distro permitido somente em simulacao"
+bash "$ROOT/tests/cachyos-smoke.sh"
 bash "$ROOT/tests/install-status-smoke.sh"
 bash "$ROOT/tests/flatpak-discover-smoke.sh"
 echo "Todos os testes de smoke passaram. Nenhuma instalacao foi executada."
