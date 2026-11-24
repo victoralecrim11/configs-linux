@@ -71,23 +71,23 @@ bash install.sh --profile full --with-node --with-docker --with-dotnet --with-vs
 
 Os extras **não** são instalados implicitamente no perfil Dev ou Full. Isso evita adicionar serviços e repositórios que você talvez não queira. Pacotes indisponíveis são informados e instalações APT com remoção de dependências são bloqueadas.
 
-### Flatpak/Flathub integrado ao KDE Discover (padrão)
+### Flatpak/Flathub integrado à loja da distribuição (padrão)
 
-Todo perfil (`dev-fullstack`, `premium`, `full`) instala Flatpak e Discover. No Debian/Kubuntu: `flatpak`, `plasma-discover`, `plasma-discover-backend-flatpak`, `kde-config-flatpak`. No CachyOS: `flatpak`, `discover` (backend Flatpak integrado) e `flatpak-kcm`. Depois, o script detecta se o remoto `flathub` já existe no escopo do usuário ou do sistema. Se não existir em nenhum deles, adiciona-o **somente ao usuário atual** com:
+Todo perfil (`dev-fullstack`, `premium`, `full`) instala Flatpak e a loja da distribuição. No Debian/Kubuntu: `flatpak`, `plasma-discover`, `plasma-discover-backend-flatpak`, `kde-config-flatpak`. No CachyOS: `flatpak` e `cachyos-packageinstaller`. Nenhuma loja existente é removida. Depois, o script detecta se o remoto `flathub` já existe no escopo do usuário ou do sistema. Se não existir em nenhum deles, adiciona-o **somente ao usuário atual** com:
 
 ```bash
 flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 ```
 
-A configuração é idempotente e não instala apps Flatpak automaticamente. O Discover deverá oferecer a fonte Flathub após reiniciá-lo; faça logout/login para atualizar integrações de sessão.
+A configuração é idempotente e não instala apps Flatpak automaticamente. Reabra a loja. No CachyOS, use Package Installer 2.0 ou posterior e habilite o suporte Flatpak nas configurações, se necessário; para atualizar, execute `sudo pacman -Syu`. faça logout/login para atualizar integrações de sessão.
 
 ```bash
 flatpak remotes --show-details
 # Debian/Kubuntu: dpkg-query -W flatpak plasma-discover plasma-discover-backend-flatpak kde-config-flatpak
-# CachyOS: pacman -Q flatpak discover flatpak-kcm
+# CachyOS: pacman -Q flatpak cachyos-packageinstaller
 ```
 
-O rastreador de perfis valida a **presença dos pacotes**, não se a fonte Flathub aparece visualmente no Discover. Se a rede falhar durante a configuração do remoto, a instalação retorna erro e a falha é registrada.
+O rastreador de perfis valida a **presença dos pacotes**, não se a fonte Flathub aparece visualmente na loja gráfica. Se a rede falhar durante a configuração do remoto, a instalação retorna erro e a falha é registrada.
 
 ### CachyOS: primeira execução e cuidados com AUR
 
