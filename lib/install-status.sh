@@ -8,7 +8,12 @@ install_status_root() {
 install_status_packages() {
   # Componentes compartilhados pelos perfis dev-fullstack, premium e full.
   printf '%s\n' fonts-firacode fonts-jetbrains-mono fonts-inter \
-    flatpak plasma-discover plasma-discover-backend-flatpak kde-config-flatpak
+    flatpak
+  if [[ "${DISTRO_BACKEND:-}" == cachyos ]]; then
+    printf '%s\n' cachyos-packageinstaller
+  else
+    printf '%s\n' plasma-discover plasma-discover-backend-flatpak kde-config-flatpak
+  fi
   case "$1" in
     premium)
       printf '%s\n' papirus-icon-theme fonts-firacode btop fastfetch librsvg2-bin curl ca-certificates krema
