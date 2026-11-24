@@ -165,7 +165,11 @@ if (( DRY_RUN )); then
     [[ "$WITH_DOTNET" -eq 0 || "$DISTRO_BACKEND" != debian ]] ||
       info "Dotnet no Debian: pacote oficial packages-microsoft-prod.deb"
   fi
-  info "Comum a todos: fontes Fira Code, JetBrains Mono e Inter; Flatpak, Discover e Flathub; atalhos Windows KDE."
+  if [[ "$DISTRO_BACKEND" == cachyos ]]; then
+    info "Comum a todos: fontes Fira Code, JetBrains Mono e Inter; Flatpak, CachyOS Package Installer e Flathub; atalhos Windows KDE."
+  else
+    info "Comum a todos: fontes Fira Code, JetBrains Mono e Inter; Flatpak, Discover e Flathub; atalhos Windows KDE."
+  fi
   if (( WITH_VISUAL_PRESETS )); then
     info "Presets opcionais: Sweet, Layan e dois Breeze (somente registra, nao aplica; baixa temas de terceiros)."
   else
