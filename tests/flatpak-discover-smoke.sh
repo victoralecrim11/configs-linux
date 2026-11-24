@@ -33,6 +33,10 @@ info() { :; }
 die() { echo "$*" >&2; exit 1; }
 require_cmd() { command -v "$1" >/dev/null 2>&1; }
 package_install_safe() {
+  if [[ "${DISTRO_BACKEND:-}" == cachyos ]]; then
+    [[ "$1" == "Flatpak e CachyOS Package Installer" && "$#" -eq 3 && "$2" == flatpak && "$3" == cachyos-packageinstaller ]]
+    return
+  fi
   [[ "$1" == "Flatpak e Discover" && "$#" -eq 5 ]] || return 1
   [[ "$2" == flatpak && "$3" == plasma-discover &&
      "$4" == plasma-discover-backend-flatpak && "$5" == kde-config-flatpak ]]
@@ -68,3 +72,11 @@ if bash "$ROOT/install.sh" --profile dev --with-visual-presets --dry-run \
   echo '[ERRO] Presets visuais foram aceitos no perfil dev.' >&2; exit 1
 fi
 echo '[OK] presets visuais disponiveis apenas via opt-in Premium/Full'
+
+DISTRO_BACKEND=cachyos
+setup_flatpak_discover
+[[ "$(grep -c '^remote-add ' "$TEST_LOG")" -eq 1 ]]
+if ( export TEST_MISSING_PACKAGE=cachyos-packageinstaller; setup_flatpak_discover >/dev/null 2>&1 ); then
+  echo "[ERRO] Package Installer ausente nao detectado." >&2; exit 1
+fi
+echo "[OK] CachyOS: loja nativa e remoto existente preservado"
