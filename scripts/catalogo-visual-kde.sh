@@ -11,18 +11,19 @@ Catalogo de perfis visuais KDE 6
   bash scripts/catalogo-visual-kde.sh listar
   bash scripts/catalogo-visual-kde.sh instalar NOME [--dry-run]
   bash scripts/catalogo-visual-kde.sh instalar-todos [--dry-run]
-Perfis: sweet-kde-videoyt, layan-minimalist-modern, catppuccin-mocha-videoyt, breeze-escuro-dock, breeze-classico
+Perfis: sweet-kde-videoyt, layan-minimalist-modern, catppuccin-mocha-videoyt, garuda-dr460nized, breeze-escuro-dock, breeze-classico
 Instalar registra os perfis SEM APLICAR a aparencia. Perfis existentes sao preservados.
 Para ativar: bash scripts/perfis-kde.sh aplicar NOME
 O preset Sweet reproduz os componentes conhecidos, nao garante identidade pixel a pixel.
 HELP
 }
-profiles=(sweet-kde-videoyt layan-minimalist-modern catppuccin-mocha-videoyt breeze-escuro-dock breeze-classico)
+profiles=(sweet-kde-videoyt layan-minimalist-modern catppuccin-mocha-videoyt garuda-dr460nized breeze-escuro-dock breeze-classico)
 description() {
   case "$1" in
     sweet-kde-videoyt) echo "Sweet escuro, Candy Icons, Sweet-Dark, blur e Krema inferior (referencia YouTube; wallpaper original nao incluso)" ;;
     layan-minimalist-modern) echo "Layan Dark, Kvantum, icones Tela, wallpaper Layan e dock Krema inferior (referencia visual)" ;;
     catppuccin-mocha-videoyt) echo "Catppuccin Mocha Mauve, painel superior, Krema inferior auto-oculta; wallpaper do video nao incluido" ;;
+    garuda-dr460nized) echo "Sweet Dark, BeautyLine, wallpaper Maldrakor, blur, Magic Lamp e Krema inferior (inspirado no Garuda)" ;;
     breeze-escuro-dock) echo "Breeze Dark, icones Breeze, painel superior e Krema inferior" ;;
     breeze-classico) echo "Breeze padrao, painel inferior e dock desligada" ;;
     *) echo "Perfil desconhecido: $1" >&2; exit 2 ;;
@@ -107,6 +108,28 @@ install_catppuccin() {
     cp -a "$defaults" "$data/plasma/look-and-feel/$theme/contents/defaults"
   fi
 }
+install_garuda() {
+  local data="${XDG_DATA_HOME:-$HOME/.local/share}"
+  local source="$CACHE/beautyline" icon_index wallpaper="$CACHE/Maldrakor.jpg"
+  install_sweet
+  mkdir -p "$CACHE" "$data/icons" "$data/wallpapers/garuda-wallpapers"
+  if [[ ! -d "$source/.git" ]]; then
+    git clone --quiet --depth=1 https://gitlab.com/garuda-linux/themes-and-settings/artwork/beautyline.git "$source"
+  fi
+  icon_index="$(find "$source" -name index.theme -type f -print -quit)"
+  [[ -n "$icon_index" ]] || { echo "BeautyLine: index.theme nao encontrado" >&2; return 1; }
+  if [[ ! -f "$data/icons/BeautyLine/index.theme" ]]; then
+    mkdir -p "$data/icons/BeautyLine"
+    tar -C "$(dirname "$icon_index")" --exclude=.git -cf - . | tar -C "$data/icons/BeautyLine" -xf -
+  fi
+  if [[ ! -s "$data/wallpapers/garuda-wallpapers/Maldrakor.jpg" ]]; then
+    command -v curl >/dev/null || { echo "curl necessario para wallpaper" >&2; return 1; }
+    curl --fail --location --silent --show-error --output "$wallpaper.tmp" \
+      https://gitlab.com/garuda-linux/themes-and-settings/artwork/garuda-wallpapers/-/raw/master/src/garuda-wallpapers/Maldrakor.jpg
+    mv -- "$wallpaper.tmp" "$wallpaper"
+    cp -- "$wallpaper" "$data/wallpapers/garuda-wallpapers/Maldrakor.jpg"
+  fi
+}
 set_key() { kwriteconfig6 --file "$1" --group "$2" --key "$3" "$4"; }
 register_one() {
   local name="$1" dry="$2" p config dock colors icons look decoration
@@ -120,6 +143,7 @@ register_one() {
     sweet-kde-videoyt) dock=on; colors=Sweet; icons=candy-icons; look=Sweet; decoration=__aurorae__svg__Sweet-Dark ;;
     layan-minimalist-modern) dock=on; colors=Layan; icons=Tela-dark; look=com.github.vinceliuice.Layan; decoration=__aurorae__svg__Layan ;;
     catppuccin-mocha-videoyt) dock=on; colors=CatppuccinMochaMauve; icons=breeze; look=Catppuccin-Mocha-Mauve; decoration=__aurorae__svg__CatppuccinMocha-Classic ;;
+    garuda-dr460nized) dock=on; colors=Sweet; icons=BeautyLine; look=Sweet; decoration=__aurorae__svg__Sweet-Dark ;;
     breeze-escuro-dock) dock=on; colors=BreezeDark; icons=breeze; look=org.kde.breezedark.desktop; decoration= ;;
     breeze-classico) dock=off; colors=BreezeLight; icons=breeze; look=org.kde.breeze.desktop; decoration= ;;
   esac
@@ -131,6 +155,7 @@ register_one() {
   }
   command -v kwriteconfig6 >/dev/null || { echo "kwriteconfig6 ausente" >&2; exit 1; }
   if [[ "$name" == sweet-kde-videoyt ]]; then install_sweet; fi
+  if [[ "$name" == garuda-dr460nized ]]; then install_garuda; fi
   if [[ "$name" == layan-minimalist-modern ]]; then install_layan; fi
   if [[ "$name" == catppuccin-mocha-videoyt ]]; then install_catppuccin; fi
   # O gerenciador marca uma captura como ativa; registrar um preset nao deve
@@ -165,6 +190,13 @@ register_one() {
     # Efeitos discretos; wallpaper do tema instalado no diretorio local.
     kwriteconfig6 --file "$config/kwinrc" --group Plugins --key blurEnabled --type bool true
     kwriteconfig6 --file "$config/kwinrc" --group Plugins --key contrastEnabled --type bool true
+  fi
+  if [[ "$name" == garuda-dr460nized ]]; then
+    local wallpaper="${XDG_DATA_HOME:-$HOME/.local/share}/wallpapers/garuda-wallpapers/Maldrakor.jpg"
+    if [[ -f "$wallpaper" && -f "$config/plasma-org.kde.plasma.desktop-appletsrc" ]]; then
+      sed -i "s|^Image=.*|Image=$wallpaper|; s|^PreviewImage=.*|PreviewImage=$wallpaper|" "$config/plasma-org.kde.plasma.desktop-appletsrc"
+    fi
+    kwriteconfig6 --file "$config/kwinrc" --group Plugins --key squashEnabled --type bool false
   fi
   if [[ "$name" == catppuccin-mocha-videoyt ]]; then
     # Top panel + Krema autohide are applied by the existing profile manager.
