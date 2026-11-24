@@ -130,9 +130,9 @@ bash scripts/perfis-kde.sh aplicar layan-minimalist-modern
 
 **Dica para VirtualBox:** crie um snapshot da VM antes dos perfis Premium/Full. A instalação real pode alterar painéis, decoração, efeitos e wallpaper. Os testes automatizados não substituem a validação visual na sua versão do Plasma.
 
-### Flatpak, Flathub e Discover
+### Flatpak, Flathub e loja da distribuição
 
-**Todos os perfis de instalação** incluem Flatpak e KDE Discover. No Debian/Kubuntu, os pacotes são `flatpak`, `plasma-discover`, `plasma-discover-backend-flatpak`, `kde-config-flatpak`; no CachyOS, `flatpak`, `discover` (backend Flatpak incluído) e `flatpak-kcm`. O instalador adiciona **Flathub para o usuário atual**, se ainda não existir como remoto de usuário ou sistema, sem sobrescrever nem duplicar configurações. Assim, aplicativos Flatpak ficam disponíveis no Discover. A instalação não baixa aplicativos do Flathub automaticamente.
+**Todos os perfis de instalação** incluem Flatpak e a loja da distribuição. No Debian/Kubuntu, os pacotes são `flatpak`, `plasma-discover`, `plasma-discover-backend-flatpak`, `kde-config-flatpak`; no CachyOS, `flatpak` e `cachyos-packageinstaller`. O Discover existente não é removido. O instalador adiciona **Flathub para o usuário atual**, se ainda não existir como remoto de usuário ou sistema, sem sobrescrever nem duplicar configurações. No CachyOS, use uma versão do Package Installer com suporte Flatpak (2.0 ou posterior) e habilite a opção nas configurações, se necessário. Caso a versão instalada seja antiga, atualize com `sudo pacman -Syu`. A instalação não baixa aplicativos do Flathub automaticamente.
 
 ```bash
 # Conferir os pacotes e a fonte Flathub depois de instalar
@@ -140,13 +140,13 @@ bash install.sh --verify-profile full
 flatpak remotes --show-details
 ```
 
-Feche e reabra o Discover; faça logout/login (ou reinicie) se os apps Flatpak ainda não aparecerem. A verificação `--verify-profile` confere pacotes, não o remoto Flathub nem a interface gráfica. Consulte [o guia de instalação](docs/instalacao.md).
+Feche e reabra a loja gráfica; faça logout/login (ou reinicie) se os apps Flatpak ainda não aparecerem. A verificação `--verify-profile` confere pacotes, não o remoto Flathub nem a interface gráfica. Consulte [o guia de instalação](docs/instalacao.md).
 
 ### Notas sobre pacotes no CachyOS
 
 O backend CachyOS instala pacotes oficiais via **Pacman** e evita o uso isolado de `pacman -Sy` (atualizações parciais). `--yes` não ignora as confirmações do Pacman nem as autorizações exigidas para o AUR. **Arch Linux genérico não é uma distribuição homologada por este instalador.**
 
-No CachyOS, o script mapeia nomes de pacotes APT para equivalentes Pacman, integra Flatpak/Discover, utiliza `dotnet-sdk-10.0` para .NET 10 e solicita confirmação para o uso do AUR com Krema ou VS Code. Os perfis visuais KDE são separados dos perfis de instalação, e os snapshots pessoais permanecem locais.
+No CachyOS, o script mapeia nomes de pacotes APT para equivalentes Pacman, integra Flatpak/Package Installer, utiliza `dotnet-sdk-10.0` para .NET 10 e solicita confirmação para o uso do AUR com Krema ou VS Code. Os perfis visuais KDE são separados dos perfis de instalação, e os snapshots pessoais permanecem locais.
 
 ## Perfis de instalação e status
 
@@ -225,7 +225,7 @@ bash install.sh --profile full --with-visual-presets --dry-run
 bash install.sh --profile full --with-visual-presets
 ```
 
-O instalador pede confirmação adicional: registra os cinco perfis **sem aplicar nenhum**, preserva perfis existentes e instala recursos dos temas Sweet/Layan a partir de projetos de terceiros (inclusive executando o instalador do Layan como usuário comum). Também é possível registrar os perfis separadamente pelo catálogo. O perfil `dev` não instala presets visuais, mesmo com Flatpak e Discover disponíveis.
+O instalador pede confirmação adicional: registra os cinco perfis **sem aplicar nenhum**, preserva perfis existentes e instala recursos dos temas Sweet/Layan a partir de projetos de terceiros (inclusive executando o instalador do Layan como usuário comum). Também é possível registrar os perfis separadamente pelo catálogo. O perfil `dev` não instala presets visuais, mesmo com Flatpak e a loja gráfica disponíveis.
 
 O perfil `catppuccin-mocha-videoyt` segue o vídeo [COMO DEIXAR SEU LINUX LINDO!](https://youtu.be/usXZBNjo8gI): Catppuccin Mocha Mauve, painel KDE superior e dock Krema inferior em ocultação automática. O wallpaper japonês do trem e os widgets/calendário do vídeo não são distribuídos pelo preset, pois sua origem e licença ainda não foram confirmadas. O perfil novo é registrado sem aplicar a sessão.\n\nA instalação dos temas de terceiros exige Git e internet; a dock Krema precisa estar instalada separadamente. O catálogo não publica snapshots pessoais e não garante reprodução pixel a pixel. Consulte [perfis KDE](docs/perfis-visuais.md) e [recursos visuais](docs/recursos-visuais.md) para detalhes e limitações.
 
