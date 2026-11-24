@@ -116,7 +116,7 @@ bash scripts/perfis-kde.sh listar
 bash scripts/catalogo-visual-kde.sh listar
 ```
 
-Para conferir outro perfil, substitua `dev-fullstack` por `premium` ou `full` em `--verify-profile`. Os cinco presets visuais são **opcionais** e não são ativados automaticamente:
+Para conferir outro perfil, substitua `dev-fullstack` por `premium` ou `full` em `--verify-profile`. Os seis presets visuais são **opcionais** e não são ativados automaticamente:
 
 ```bash
 # Somente Premium/Full: simule e registre os presets sem aplicá-los
@@ -208,7 +208,7 @@ Os snapshots ficam em `~/.local/share/linux-hybrid/profiles/`, sem serem enviado
 
 ### Catálogo de perfis visuais
 
-O catálogo oferece cinco presets: `sweet-kde-videoyt`, `layan-minimalist-modern`, `catppuccin-mocha-videoyt`, `breeze-escuro-dock` e `breeze-classico`. Instalar um preset registra sua configuração sem alterar o visual ativo. Para aplicar, use o gerenciador:
+O catálogo oferece seis presets: `sweet-kde-videoyt`, `layan-minimalist-modern`, `catppuccin-mocha-videoyt`, `garuda-dr460nized`, `breeze-escuro-dock` e `breeze-classico`. Instalar um preset registra sua configuração sem alterar o visual ativo. Para aplicar, use o gerenciador:
 
 ```bash
 bash scripts/catalogo-visual-kde.sh listar
@@ -218,14 +218,14 @@ bash scripts/perfis-kde.sh aplicar catppuccin-mocha-videoyt
 bash scripts/perfis-kde.sh atual
 ```
 
-**Os cinco presets não são registrados automaticamente por padrão**. Para incluí-los na execução de Premium ou Full, use o opt-in:
+**Os seis presets não são registrados automaticamente por padrão**. Para incluí-los na execução de Premium ou Full, use o opt-in:
 
 ```bash
 bash install.sh --profile full --with-visual-presets --dry-run
 bash install.sh --profile full --with-visual-presets
 ```
 
-O instalador pede confirmação adicional: registra os cinco perfis **sem aplicar nenhum**, preserva perfis existentes e instala recursos dos temas Sweet/Layan a partir de projetos de terceiros (inclusive executando o instalador do Layan como usuário comum). Também é possível registrar os perfis separadamente pelo catálogo. O perfil `dev` não instala presets visuais, mesmo com Flatpak e a loja gráfica disponíveis.
+O instalador pede confirmação adicional: registra os seis perfis **sem aplicar nenhum**, preserva perfis existentes e instala recursos dos temas Sweet/Layan a partir de projetos de terceiros (inclusive executando o instalador do Layan como usuário comum). Também é possível registrar os perfis separadamente pelo catálogo. O perfil `dev` não instala presets visuais, mesmo com Flatpak e a loja gráfica disponíveis.
 
 O perfil `catppuccin-mocha-videoyt` segue o vídeo [COMO DEIXAR SEU LINUX LINDO!](https://youtu.be/usXZBNjo8gI): Catppuccin Mocha Mauve, painel KDE superior e dock Krema inferior em ocultação automática. O wallpaper japonês do trem e os widgets/calendário do vídeo não são distribuídos pelo preset, pois sua origem e licença ainda não foram confirmadas. O perfil novo é registrado sem aplicar a sessão.\n\nA instalação dos temas de terceiros exige Git e internet; a dock Krema precisa estar instalada separadamente. O catálogo não publica snapshots pessoais e não garante reprodução pixel a pixel. Consulte [perfis KDE](docs/perfis-visuais.md) e [recursos visuais](docs/recursos-visuais.md) para detalhes e limitações.
 
@@ -364,3 +364,16 @@ bash scripts/perfis-kde.sh aplicar layan-minimalist-modern
 ```
 
 Detalhes em [docs/perfis-visuais.md](docs/perfis-visuais.md).
+
+### Preset Garuda Dr460nized
+
+Visual inspirado no Garuda para KDE Plasma 6, sem instalar repositorios ou configuracoes de sistema do Garuda. Usa Sweet, BeautyLine, wallpaper Maldrakor, efeitos KWin e o layout Krema existente. Requer Git, curl, internet e Krema instalada. O menu global e a fidelidade visual dependem do painel existente; nao e uma copia integral do tema oficial.
+
+```bash
+bash scripts/catalogo-visual-kde.sh instalar garuda-dr460nized --dry-run
+bash scripts/catalogo-visual-kde.sh instalar garuda-dr460nized
+bash scripts/perfis-kde.sh aplicar garuda-dr460nized --dry-run
+bash scripts/perfis-kde.sh aplicar garuda-dr460nized
+```
+
+Recursos obtidos dos projetos upstream Sweet e [BeautyLine](https://gitlab.com/garuda-linux/themes-and-settings/artwork/beautyline), [Garuda Wallpapers](https://gitlab.com/garuda-linux/themes-and-settings/artwork/garuda-wallpapers). A instalacao registra o preset sem ativar a sessao. Valide em uma VM antes do uso definitivo.
