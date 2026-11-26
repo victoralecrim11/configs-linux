@@ -587,6 +587,18 @@ apply_profile() {
     systemctl --user start plasma-plasmashell.service || true
     die "Restauracao interrompida; veja backup: $backup"
   fi
+  # Snapshots Layan antigos podem apontar para Tela-dark sem os recursos.
+  # Corrige somente a configuracao ativa, preservando o snapshot original.
+  if [[ "$name" == layan-minimalist-modern ]] &&
+     [[ "$(kreadconfig6 --file "$CONFIG_DIR/kdeglobals" --group Icons --key Theme 2>/dev/null || true)" == Tela-dark ]] &&
+     [[ ! -f "$DATA_DIR/icons/Tela-dark/index.theme" && ! -f "$HOME/.icons/Tela-dark/index.theme" && ! -f /usr/share/icons/Tela-dark/index.theme ]]; then
+    msg "AVISO: Tela-dark ausente; usando Breeze. Execute instalar-preset $name para reparar."
+    if ! kwriteconfig6 --file "$CONFIG_DIR/kdeglobals" --group Icons --key Theme breeze; then
+      restore_config "$backup" || true
+      systemctl --user start plasma-plasmashell.service || true
+      die "Falha ao configurar icones; backup: $backup"
+    fi
+  fi
   if ! systemctl --user start plasma-plasmashell.service; then
     msg "Plasma nao iniciou; tentando reverter..."
     restore_config "$backup" || true
