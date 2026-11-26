@@ -49,10 +49,10 @@ Escolha **apenas o perfil que deseja instalar**:
 | Perfil | O que instala | Comando |
 | --- | --- | --- |
 | **Premium** | Visual KDE, Papirus, Breeze Dark e dock Krema | `bash install.sh --profile premium` |
-| **Dev Fullstack** | Git, Java, Python, PHP, Composer e ferramentas de desenvolvimento | `bash install.sh --profile dev-fullstack` |
+| **Dev Fullstack** | Git, NVM, Node.js LTS, Java, Python, PHP, Composer e ferramentas de desenvolvimento | `bash install.sh --profile dev-fullstack` |
 | **Full** | Premium + Dev Fullstack | `bash install.sh --profile full` |
 
-O instalador solicita `sudo` quando necessário. **Nunca execute `sudo bash install.sh`**. Os perfis Premium e Full exigem KDE Plasma em sessão Wayland. Para instalar Node.js, Docker, .NET ou VS Code, use as opções `--with-node`, `--with-docker`, `--with-dotnet` e `--with-vscode` (somente Dev Fullstack ou Full). Veja [o guia completo](docs/instalacao.md).
+O instalador solicita `sudo` quando necessário. **Nunca execute `sudo bash install.sh`**. Os perfis Premium e Full exigem KDE Plasma em sessão Wayland. NVM e Node.js LTS são instalados por padrão. Para instalar também Node.js da distribuição, Docker, .NET ou VS Code, use as opções `--with-node`, `--with-docker`, `--with-dotnet` e `--with-vscode` (somente Dev Fullstack ou Full). Veja [o guia completo](docs/instalacao.md).
 
 ### Instalação passo a passo no CachyOS
 
@@ -377,3 +377,19 @@ bash scripts/perfis-kde.sh aplicar garuda-dr460nized
 ```
 
 Recursos obtidos dos projetos upstream Sweet e [BeautyLine](https://gitlab.com/garuda-linux/themes-and-settings/artwork/beautyline), [Garuda Wallpapers](https://gitlab.com/garuda-linux/themes-and-settings/artwork/garuda-wallpapers). A instalacao registra o preset sem ativar a sessao. Valide em uma VM antes do uso definitivo.
+
+
+### NVM e Node.js
+
+Os perfis `dev-fullstack` e `full` instalam o NVM oficial v0.40.3 e Node.js LTS no usuário, sem sudo. Instalações existentes e aliases padrão válidos são preservados. A opção `--with-node` continua instalando adicionalmente os pacotes da distribuição, mas não é necessária para usar Node.js.
+
+Abra um novo terminal Bash ou Zsh e confira:
+
+```bash
+nvm --version
+node -v
+npm -v
+nvm ls
+```
+
+No Fish, execute `bash` antes de usar NVM (não há suporte nativo ao Fish). O modo dry-run não baixa nem instala NVM. A verificação do perfil inclui NVM, Node e npm.
