@@ -72,6 +72,23 @@ install_status_check() {
     install_status_packages "$profile"
     if [[ "$profile" != premium ]]; then install_status_extras "$extras"; fi
   )
+  if [[ "$profile" != premium ]]; then
+    INSTALL_STATUS_TOTAL=$((INSTALL_STATUS_TOTAL+1))
+    if (
+      set +u
+      export NVM_DIR="${NVM_DIR:-${XDG_CONFIG_HOME:+$XDG_CONFIG_HOME/nvm}}"
+      export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+      [[ -s "$NVM_DIR/nvm.sh" ]] &&
+        source "$NVM_DIR/nvm.sh" --no-use &&
+        nvm use default >/dev/null 2>&1 &&
+        [[ "$(command -v node)" == "$NVM_DIR/"* ]] &&
+        node --version >/dev/null && npm --version >/dev/null
+    ); then
+      INSTALL_STATUS_PRESENT=$((INSTALL_STATUS_PRESENT+1))
+    else
+      INSTALL_STATUS_MISSING+="${INSTALL_STATUS_MISSING:+,}nvm-node-npm"
+    fi
+  fi
   # Presenca do pacote sem executavel pode indicar instalacao danificada.
   if [[ "$profile" != dev ]] && ! command -v krema >/dev/null 2>&1; then
     if [[ ",$INSTALL_STATUS_MISSING," != *",krema,"* ]]; then
