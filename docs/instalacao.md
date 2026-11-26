@@ -188,3 +188,19 @@ tests/
 - Mudanças visuais podem exigir sair da sessão e entrar novamente.
 - Recursos extras, incluindo o Krema e repositórios externos, dependem de disponibilidade e compatibilidade.
 - Guarde backups fora do Git antes de experimentar novas alterações.
+
+
+### NVM e Node.js
+
+Os perfis `dev-fullstack` e `full` instalam o NVM oficial v0.40.3 e Node.js LTS no usuário, sem sudo. Instalações existentes e aliases padrão válidos são preservados. A opção `--with-node` continua instalando adicionalmente os pacotes da distribuição, mas não é necessária para usar Node.js.
+
+Abra um novo terminal Bash ou Zsh e confira:
+
+```bash
+nvm --version
+node -v
+npm -v
+nvm ls
+```
+
+No Fish, execute `bash` antes de usar NVM (não há suporte nativo ao Fish). O modo dry-run não baixa nem instala NVM. A verificação do perfil inclui NVM, Node e npm.
