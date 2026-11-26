@@ -101,7 +101,9 @@ O status confirma presença de **pacotes** e execução registrada, não garante
 
 ### Presets visuais (opcionais, Premium/Full)
 
-A instalação convencional do Premium/Full prepara o visual, Krema e ferramentas, mas **não** registra automaticamente `sweet-kde-videoyt`, `layan-minimalist-modern`, `breeze-escuro-dock` e `breeze-classico`.
+A listagem `bash scripts/perfis-kde.sh listar` inclui automaticamente os perfis locais `[SALVO]` e os presets não registrados `[DISPONIVEL]`. Listar não instala nem aplica temas. Para registrar um ou todos, use `bash scripts/perfis-kde.sh instalar-preset NOME` ou `bash scripts/perfis-kde.sh instalar-presets` (ambos aceitam `--dry-run`). Veja a tabela e o passo a passo em [perfis visuais](perfis-visuais.md).
+
+A instalação convencional do Premium/Full prepara o visual, Krema e ferramentas, mas **não** registra automaticamente `sweet-kde-videoyt`, `layan-minimalist-modern`, `catppuccin-mocha-videoyt`, `garuda-dr460nized`, `breeze-escuro-dock` e `breeze-classico`.
 
 ```bash
 bash install.sh --profile full --with-visual-presets --dry-run
@@ -110,7 +112,7 @@ bash scripts/catalogo-visual-kde.sh listar
 bash scripts/perfis-kde.sh listar
 ```
 
-O `--with-visual-presets` pede confirmação específica, baixa temas externos (Sweet e Layan), executa o instalador upstream do Layan como usuário normal e **registra sem ativar** os quatro perfis. Perfis já salvos permanecem intactos. `--with-visual-presets` não é permitido com `--profile dev-fullstack` e não afeta a instalação padrão sem a flag. Para ativar, use `bash scripts/perfis-kde.sh aplicar NOME`.
+O `--with-visual-presets` pede confirmação específica, baixa temas externos (Sweet e Layan), executa o instalador upstream do Layan como usuário normal e **registra sem ativar** os seis perfis. Perfis já salvos permanecem intactos. `--with-visual-presets` não é permitido com `--profile dev-fullstack` e não afeta a instalação padrão sem a flag. Para ativar, use `bash scripts/perfis-kde.sh aplicar NOME`.
 
 
 ### Alternar KDE original ↔ Premium
