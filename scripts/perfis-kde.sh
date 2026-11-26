@@ -311,17 +311,33 @@ compare_profile() {
 }
 
 list_profiles() {
-  local dir name
-  if [[ ! -d "$ROOT" ]]; then msg "Nenhum perfil visual salvo."; return; fi
-  local found=0
+  local dir name catalog names found=0
+  local -A saved=()
+  catalog="$(dirname -- "${BASH_SOURCE[0]}")/catalogo-visual-kde.sh"
+  msg "Perfis salvos localmente:"
   for dir in "$ROOT"/*; do
-    [[ -d "$dir" && ! -L "$dir" && -f "$dir/.snapshot" ]] || continue
+    [[ -d "$dir" && ! -L "$dir" && -f "$dir/.snapshot" && -f "$dir/tracked.txt" ]] || continue
     name="${dir##*/}"
     valid_name "$name" || continue
-    msg "$name (dock=$(read_metadata "$dir/info" dock))"
+    saved["$name"]=1
+    msg "$name (dock=$(read_metadata "$dir/info" dock)) [SALVO]"
     found=1
   done
   (( found )) || msg "Nenhum perfil visual salvo."
+  msg ""
+  msg "Presets disponiveis para instalacao:"
+  names="$(bash "$catalog" listar-nomes)" || die "Falha ao consultar catalogo."
+  found=0
+  while IFS= read -r name; do
+    valid_name "$name" || continue
+    [[ -z "${saved[$name]+x}" ]] || continue
+    msg "$name [DISPONIVEL]"
+    found=1
+  done <<< "$names"
+  (( found )) || msg "Todos os presets do catalogo estao salvos."
+  msg ""
+  msg "Para registrar: bash scripts/perfis-kde.sh instalar-preset NOME"
+  msg "Para registrar todos: bash scripts/perfis-kde.sh instalar-presets"
 }
 current_profile() {
   local name="nenhum" saved_dock="" actual_dock=""
