@@ -96,6 +96,41 @@ setup_docker() {
   info "Docker sera mantido na configuracao padrao do sistema; confira permissao do usuario."
 }
 
+# NVM oficial, instalado no HOME do usuario (sem sudo).
+setup_nvm() (
+  set +u
+  export NVM_DIR="${NVM_DIR:-${XDG_CONFIG_HOME:+$XDG_CONFIG_HOME/nvm}}"
+  export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+  if [[ ! -s "$NVM_DIR/nvm.sh" ]]; then
+    confirm "Instalar NVM oficial (v0.40.3) no diretorio do usuario?" ||
+      die "Instalacao NVM cancelada."
+    local tmp
+    tmp="$(mktemp)"
+    curl --fail --show-error --location --retry 2 \
+      https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh -o "$tmp" ||
+      { rm -f -- "$tmp"; die "Falha ao baixar NVM."; }
+    PROFILE=/dev/null bash "$tmp" ||
+      { rm -f -- "$tmp"; die "Falha ao instalar NVM."; }
+    rm -f -- "$tmp"
+  fi
+  source "$NVM_DIR/nvm.sh" --no-use
+  nvm install --lts || die "Falha ao instalar Node.js LTS."
+  if [[ "$(nvm version default)" == N/A ]]; then
+    nvm alias default 'lts/*' || die "Falha ao configurar Node padrao."
+  fi
+  nvm use default || die "Falha ao ativar Node padrao."
+  node --version && npm --version || die "Node/npm indisponiveis."
+  local rc
+  for rc in "$HOME/.bashrc" "${ZDOTDIR:-$HOME}/.zshrc"; do
+    if ! grep -Fqs 'nvm.sh' "$rc"; then
+      printf '\n# NVM (linux-hybrid)\nexport NVM_DIR=%q\n[ ! -s "$NVM_DIR/nvm.sh" ] || . "$NVM_DIR/nvm.sh"\n' "$NVM_DIR" >> "$rc"
+    fi
+  done
+  if [[ "${SHELL##*/}" == fish ]]; then
+    warn "Fish nao suporta NVM nativamente. Use bash para executar nvm, node e npm."
+  fi
+)
+
 setup_developer() {
   info "Preparando ferramentas Developer no $DISTRO_NAME"
   package_install_safe "Developer" \
@@ -104,6 +139,7 @@ setup_developer() {
     openjdk-21-jdk maven \
     php-cli php-mbstring php-xml php-curl composer
 
+  setup_nvm || die "Falha na configuracao NVM."
   (( WITH_NODE )) && package_install_safe "Node.js (pacotes da distribuicao)" nodejs npm
   (( WITH_DOCKER )) && setup_docker
   (( WITH_DOTNET )) && setup_dotnet10
