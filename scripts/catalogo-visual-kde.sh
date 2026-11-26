@@ -214,6 +214,8 @@ register_one() {
 }
 case "${1:---help}" in
   -h|--help) usage ;;
+  listar-nomes)
+    printf '%s\n' "${profiles[@]}" ;;
   listar)
     for name in "${profiles[@]}"; do
       printf '%-24s %s%s\n' "$name" "$(description "$name")" "$([[ -f "$DEST/$name/.snapshot" ]] && echo ' [SALVO]' || true)"
