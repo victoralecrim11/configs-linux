@@ -44,7 +44,7 @@ help_text() {
 Linux Hybrid Setup 3.0
 Uso: bash install.sh [--profile premium|dev-fullstack|full] [opcoes]
   --profile premium   KDE visual + Krema (alias: visual)
-  --profile dev-fullstack  Java, Python, PHP e ferramentas de desenvolvimento (alias: dev)
+  --profile dev-fullstack  NVM, Node.js LTS, Java, Python, PHP e ferramentas de desenvolvimento (alias: dev)
   --profile full      Premium + Dev Fullstack
   --dry-run           Mostrar plano SEM modificar arquivos ou usar sudo
   --detect            Detectar a distro sem instalar
@@ -53,7 +53,7 @@ Uso: bash install.sh [--profile premium|dev-fullstack|full] [opcoes]
   --list-profiles     Alias de --status (nao lista perfis visuais KDE)
   --verify-profile N  Conferir pacotes de premium, dev-fullstack ou full
   --yes               Confirmar etapas de instalacao explicitamente
-  --with-node         Incluir Node.js e npm dos repositorios da distro
+  --with-node         Opcional: incluir tambem Node.js e npm da distro
   --with-docker       Incluir Docker (se nao houver podman-docker)
   --with-dotnet       Incluir .NET SDK 10 e feed Microsoft se necessario
   --with-vscode       Incluir VS Code e feed Microsoft se necessario
@@ -160,7 +160,7 @@ if (( DRY_RUN )); then
     esac
   fi
   if [[ "$PROFILE" != premium ]]; then
-    info "Dev Fullstack: Git, toolchain de compilacao, Python 3, Java 21, Maven, PHP/Composer, CLI"
+    info "Dev Fullstack: Git, toolchain de compilacao, Python 3, Java 21, Maven, PHP/Composer, CLI, NVM oficial v0.40.3 e Node.js LTS (usuario; Bash/Zsh)"
     info "Extras: node=$WITH_NODE docker=$WITH_DOCKER dotnet=$WITH_DOTNET vscode=$WITH_VSCODE"
     [[ "$WITH_DOTNET" -eq 0 || "$DISTRO_BACKEND" != debian ]] ||
       info "Dotnet no Debian: pacote oficial packages-microsoft-prod.deb"
