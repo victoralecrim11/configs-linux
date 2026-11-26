@@ -62,6 +62,18 @@ install_sweet() {
   cp -a -n "$k/cursors/Sweet-cursors" "$data/icons/"
   asset_copy candy-icons "" "$data/icons/candy-icons"
 }
+install_tela() {
+  local source="$CACHE/Tela-icon-theme" data="${XDG_DATA_HOME:-$HOME/.local/share}"
+  if [[ -f "$data/icons/Tela-dark/index.theme" || -f "$HOME/.icons/Tela-dark/index.theme" || -f /usr/share/icons/Tela-dark/index.theme ]]; then
+    return 0
+  fi
+  mkdir -p "$CACHE" "$data/icons" || return 1
+  if [[ ! -d "$source/.git" ]]; then
+    git clone --quiet --depth=1 https://github.com/vinceliuice/Tela-icon-theme.git "$source" || return 1
+  fi
+  (cd "$source" && bash ./install.sh -d "$data/icons" standard) || return 1
+  [[ -f "$data/icons/Tela-dark/index.theme" ]]
+}
 install_layan() {
   local source="$CACHE/Layan-kde"
   command -v git >/dev/null || { echo "git necessario para instalar Layan" >&2; exit 1; }
@@ -71,6 +83,7 @@ install_layan() {
   fi
   # Instalador upstream executado como usuario normal (sem sudo).
   (cd "$source" && bash ./install.sh)
+  install_tela || printf '[AVISO] Tela-dark indisponivel; o preset usara Breeze se necessario.\n' >&2
 }
 
 # Instala apenas arquivos de tema no XDG_DATA_HOME. Nao executa o instalador
@@ -136,6 +149,10 @@ register_one() {
   description "$name" >/dev/null
   p="$DEST/$name"
   if [[ -f "$p/.snapshot" ]]; then
+    if [[ "$name" == layan-minimalist-modern && "$dry" == 0 ]]; then
+      [[ "$EUID" -ne 0 ]] || { echo "Nao execute com sudo." >&2; return 1; }
+      install_tela || { echo "Nao foi possivel instalar Tela-dark." >&2; return 1; }
+    fi
     printf '[EXISTE] %s (preservado, nao sobrescrito)\n' "$name"
     return 0
   fi
@@ -156,7 +173,12 @@ register_one() {
   command -v kwriteconfig6 >/dev/null || { echo "kwriteconfig6 ausente" >&2; exit 1; }
   if [[ "$name" == sweet-kde-videoyt ]]; then install_sweet; fi
   if [[ "$name" == garuda-dr460nized ]]; then install_garuda; fi
-  if [[ "$name" == layan-minimalist-modern ]]; then install_layan; fi
+  if [[ "$name" == layan-minimalist-modern ]]; then
+    install_layan
+    if [[ ! -f "${XDG_DATA_HOME:-$HOME/.local/share}/icons/Tela-dark/index.theme" && ! -f "$HOME/.icons/Tela-dark/index.theme" && ! -f /usr/share/icons/Tela-dark/index.theme ]]; then
+      icons=breeze
+    fi
+  fi
   if [[ "$name" == catppuccin-mocha-videoyt ]]; then install_catppuccin; fi
   # O gerenciador marca uma captura como ativa; registrar um preset nao deve
   # mudar o indicador do perfil que o usuario realmente esta utilizando.
