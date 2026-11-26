@@ -33,6 +33,39 @@ git pull --ff-only
 
 No Konsole do KDE Plasma, execute os exemplos abaixo **como usuário normal, sem `sudo bash`**.
 
+### Listagem automática dos perfis visuais
+
+```bash
+cd ~/configs-linux
+bash scripts/perfis-kde.sh listar
+```
+
+A listagem reúne automaticamente os perfis locais **[SALVO]** (prontos para aplicar, sujeitos às dependências) e os presets do repositório **[DISPONIVEL]** (ainda precisam ser registrados). Não baixa temas, não altera o KDE e não duplica nomes. Os snapshots pessoais não são sincronizados pelo Git.
+
+| Preset do catálogo | Visual | Dock |
+| --- | --- | --- |
+| `sweet-kde-videoyt` | Sweet e Candy Icons | on |
+| `layan-minimalist-modern` | Layan Dark | on |
+| `catppuccin-mocha-videoyt` | Catppuccin Mocha Mauve | on |
+| `garuda-dr460nized` | Inspirado no Garuda | on |
+| `breeze-escuro-dock` | Breeze Dark | on |
+| `breeze-classico` | Breeze clássico | off |
+
+```bash
+# Registrar um preset (simular e executar)
+bash scripts/perfis-kde.sh instalar-preset sweet-kde-videoyt --dry-run
+bash scripts/perfis-kde.sh instalar-preset sweet-kde-videoyt
+# Ou registrar todos
+bash scripts/perfis-kde.sh instalar-presets --dry-run
+bash scripts/perfis-kde.sh instalar-presets
+# Aplicar explicitamente após registrar
+bash scripts/perfis-kde.sh aplicar sweet-kde-videoyt --dry-run
+bash scripts/perfis-kde.sh aplicar sweet-kde-videoyt
+bash scripts/perfis-kde.sh atual
+```
+
+O registro é opcional, requer sessão KDE e pode baixar recursos externos. A aplicação de presets com dock ligada exige Krema instalada e Wayland. Premium/Full também podem registrar os presets com `--with-visual-presets`; Dev Fullstack não aceita essa flag. Não confunda `install.sh --list-profiles` (perfis de instalação) com `scripts/perfis-kde.sh listar` (perfis visuais).
+
 ### Criar um novo perfil visual
 
 1. Em **Configurações do Sistema → Cores e temas**, escolha tema, ícones, esquema de cores, fonte e efeitos.
@@ -261,7 +294,7 @@ O **`scripts/perfis-kde.sh`** permite salvar, listar, inspecionar e aplicar **v�
 - **Premium / Dev Fullstack / Full:** instalam programas e preparam o sistema.
 - **Original / hybrid-premium / sweet / outros:** são **fotografias locais da aparência do KDE**. Alternar entre elas **não** reinstala programas.
 
-Os perfis ficam **somente no computador**, em `${XDG_DATA_HOME:-$HOME/.local/share}/linux-hybrid/profiles/`. Não são adicionados ao Git automaticamente e podem conter preferências pessoais, wallpapers ou fontes que você não deve publicar.
+Os snapshots pessoais ficam **somente no computador**, em `${XDG_DATA_HOME:-$HOME/.local/share}/linux-hybrid/profiles/`. Não são adicionados ao Git automaticamente e podem conter preferências pessoais, wallpapers ou fontes que você não deve publicar.
 
 
 ### Passo 1 — Preparar a distribuição, clonar o repositório e validar
@@ -335,7 +368,7 @@ bash scripts/perfis-kde.sh salvar sweet --recursos --dock keep
 
 Use `--dock on` em vez de `keep` caso queira **ativar** o Krema com o Sweet; use `--dock off` se quiser **ocultá-lo** nesse perfil. `keep` mantém o estado atual da dock ao aplicar o perfil.
 
-**Importante:** o script **não baixa nem instala automaticamente o tema Sweet**. Ele registra o estado **depois** que você configurá-lo no KDE. Também não captura pacotes de sistema, applets não instalados ou temas disponíveis somente em `/usr/share`. Para reproduzir em outra distro, instale os componentes faltantes antes de aplicar o snapshot.
+**Importante:** o comando `salvar` **não baixa nem instala automaticamente o tema Sweet**. Ele registra o estado **depois** que você configurá-lo no KDE. Também não captura pacotes de sistema, applets não instalados ou temas disponíveis somente em `/usr/share`. Para reproduzir em outra distro, instale os componentes faltantes antes de aplicar o snapshot.
 
 
 ### Passo 5 — Listar e alternar os perfis
@@ -402,7 +435,7 @@ Recursos incluídos são **recuperados somente quando faltam**: o gerenciador n�
 | --- | --- |
 | `salvar NOME [--recursos] [--dock on\|off\|keep]` | Cria perfil sem substituir outro |
 | `atualizar NOME [--recursos] [--dock on\|off\|keep]` | Nova versão, arquivando a anterior |
-| `listar` / `status` | Lista perfis / estado registrado |
+| `listar` / `status` | Lista perfis locais e presets disponíveis / estado registrado |
 | `detalhes NOME` | Exibe metadados e tamanho dos recursos |
 | `aplicar NOME --dry-run` | Simula sem alterar |
 | `aplicar NOME` | Aplica configurações e dock |
@@ -415,9 +448,9 @@ Em todos os casos, prefixe os comandos com `bash scripts/perfis-kde.sh`, na raiz
 
 ## Catálogo de receitas visuais compartilháveis
 
-Use `bash scripts/perfis-kde.sh catalogo` para ver os presets, e `bash scripts/perfis-kde.sh instalar-presets --dry-run` para simular. Execute `instalar-todos` para registrar os que estiverem faltando, ou `instalar sweet-kde-videoyt` para registrar só esse. Os snapshots pessoais continuam em `~/.local/share/linux-hybrid/profiles/`, fora do Git.
+Use `bash scripts/perfis-kde.sh catalogo` para ver os presets, e `bash scripts/perfis-kde.sh instalar-presets --dry-run` para simular. Execute `bash scripts/perfis-kde.sh instalar-presets` para registrar os que estiverem faltando, ou `bash scripts/perfis-kde.sh instalar-preset sweet-kde-videoyt` para registrar só esse. Os snapshots pessoais continuam em `~/.local/share/linux-hybrid/profiles/`, fora do Git.
 
-O catálogo oferece `sweet-kde-videoyt`, `breeze-escuro-dock` e `breeze-classico`. Registrar não ativa; use `bash scripts/perfis-kde.sh aplicar NOME`. Os presets herdam a organização do painel do ambiente onde são criados e só modificam as opções visuais documentadas. Para fidelidade completa, ajustes de wallpapers, widgets, fonte e Alt+Tab ainda exigem conferência manual. Recursos Sweet podem precisar de acesso ao GitHub; a Krema deve estar instalada separadamente. Não use sudo para executar o catálogo.
+O catálogo oferece os seis presets da tabela acima. Registrar não ativa; use `bash scripts/perfis-kde.sh aplicar NOME`. Os presets herdam a organização do painel do ambiente onde são criados e só modificam as opções visuais documentadas. Para fidelidade completa, ajustes de wallpapers, widgets, fonte e Alt+Tab ainda exigem conferência manual. Recursos Sweet podem precisar de acesso ao GitHub; a Krema deve estar instalada separadamente. Não use sudo para executar o catálogo.
 
 ## Layan Minimalist Modern
 
