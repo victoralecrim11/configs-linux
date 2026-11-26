@@ -208,7 +208,7 @@ Os snapshots ficam em `~/.local/share/linux-hybrid/profiles/`, sem serem enviado
 
 ### Catálogo de perfis visuais
 
-O comando `bash scripts/perfis-kde.sh listar` mostra os snapshots locais `[SALVO]` e os presets do catálogo ainda não registrados `[DISPONIVEL]`, sem baixar recursos nem alterar a aparência. Para registrar um preset, use `bash scripts/perfis-kde.sh instalar-preset NOME`; para registrar todos, use `bash scripts/perfis-kde.sh instalar-presets`.
+**Listagem automática por padrão:** o comando `bash scripts/perfis-kde.sh listar` mostra os snapshots locais `[SALVO]` e os presets do catálogo ainda não registrados `[DISPONIVEL]`, sem baixar recursos nem alterar a aparência. Para registrar um preset, use `bash scripts/perfis-kde.sh instalar-preset NOME`; para registrar todos, use `bash scripts/perfis-kde.sh instalar-presets`. Ambos aceitam `--dry-run`. Consulte o [guia de perfis visuais](docs/perfis-visuais.md#listagem-automática-dos-perfis-visuais) para a tabela completa e os comandos de aplicação.
 
 O catálogo oferece seis presets: `sweet-kde-videoyt`, `layan-minimalist-modern`, `catppuccin-mocha-videoyt`, `garuda-dr460nized`, `breeze-escuro-dock` e `breeze-classico`. Instalar um preset registra sua configuração sem alterar o visual ativo. Para aplicar, use o gerenciador:
 
